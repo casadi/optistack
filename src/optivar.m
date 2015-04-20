@@ -6,9 +6,10 @@ classdef optivar < OptimizationObject
     %  x = optivar(n,m)                Matrix of shape nxn
     %  x = optivar(n,m,name)           A name for printing the variable
     
-    properties
+    properties(Constant)
+       shorthand = 'x'; 
     end
-    
+
     methods
         function self = optivar(varargin)
            if isempty(varargin)
