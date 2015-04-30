@@ -9,6 +9,11 @@ classdef optivar < OptimizationObject
     properties(Constant)
        shorthand = 'x'; 
     end
+    
+    properties
+       lb = -inf;
+       ub = inf;
+    end
 
     methods
         function self = optivar(varargin)

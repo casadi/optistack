@@ -19,7 +19,7 @@ classdef OptimizationObject < casadi.MX
            mymapping = OptimizationObject.mapping;
            mymapping(self.hash()) = self;
         end
-        function val = value(self)
+        function val = optival(self)
             val = self.num_value;
         end
         function [] = setValue(self,value)
