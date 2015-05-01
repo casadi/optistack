@@ -7,7 +7,7 @@ classdef OptimizationObject < casadi.MX
         mapping = containers.Map('KeyType','uint64','ValueType','any');
     end
     properties
-        num_value = nan;
+        value = nan;
     end
     
     methods
@@ -20,10 +20,10 @@ classdef OptimizationObject < casadi.MX
            mymapping(self.hash()) = self;
         end
         function val = optival(self)
-            val = self.num_value;
+            val = self.value;
         end
         function [] = setValue(self,value)
-            self.num_value = value;
+            self.value = value;
         end
     end
     methods(Static)

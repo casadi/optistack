@@ -1,23 +1,18 @@
-classdef optivar < OptimizationObject
-    % Create an optimization variable
+classdef optipar < OptimizationObject
+    % Create an optimization parameter,
+    % something that is not optimised for.
     %
-    %  x = optivar()                   Scalar
-    %  x = optivar(n)                  Column vector of length n
-    %  x = optivar(n,m)                Matrix of shape nxn
-    %  x = optivar(n,m,name)           A name for printing the variable
+    %  x = optipar()                   Scalar
+    %  x = optipar(n)                  Column vector of length n
+    %  x = optipar(n,m)                Matrix of shape nxn
+    %  x = optipar(n,m,name)           A name for printing the variable
     
     properties(Constant)
-       shorthand = 'x'; 
-    end
-    
-    properties
-       lb = -inf;
-       ub = inf;
-       init = 0;
+       shorthand = 'p';
     end
 
     methods
-        function self = optivar(varargin)
+        function self = optipar(varargin)
            if isempty(varargin)
                shape = 1;
            elseif length(varargin)==1
@@ -29,7 +24,7 @@ classdef optivar < OptimizationObject
            if length(varargin)==3
                name = varargin{3};
            else
-               name = 'x';
+               name = 'p';
            end
            
            self@OptimizationObject(shape,name);
