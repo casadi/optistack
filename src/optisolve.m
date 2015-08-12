@@ -21,6 +21,11 @@ classdef optisolve
             else
                 constraints = {};
             end
+            options = struct;
+            if length(varargin)>=2
+                options = varargin{2};
+            end
+
             import casadi.*
 
             if ~iscell(constraints)
@@ -31,22 +36,21 @@ classdef optisolve
             symbols = OptimizationObject.get_primitives({objective gl_pure{:}});
             
             % helper functions for 'x'
-            X = poor_veccat(symbols.x{:});
-            helper = MXFunction({X},symbols.x);
+            X = veccat(symbols.x{:});
+            helper = MXFunction('helper',{X},symbols.x);
             helper.init();
 
-            helper_inv = MXFunction(symbols.x,{X});
+            helper_inv = MXFunction('helper_inv',symbols.x,{X});
             helper_inv.init();
 
             % helper functions for 'p' if applicable
             if isfield(symbols,'p')
-              P = poor_veccat(symbols.p{:});
+              P = veccat(symbols.p{:});
 
-              self.Phelper_inv = MXFunction(symbols.p,{P});
-              self.Phelper_inv.init();
+              self.Phelper_inv = MXFunction('Phelper_inv',symbols.p,{P});
               
             else
-              P = [];
+              P = MX.sym('p',0,1);
             end
 
             if ~isempty(gl_pure)
@@ -54,22 +58,61 @@ classdef optisolve
                 for i = 1:length(gl_pure)
                    g_helpers = {g_helpers{:},MX.sym('g',gl_pure{i}.sparsity()) }; 
                 end
-                G_helpers = poor_veccat(g_helpers{:});
+                G_helpers = veccat(g_helpers{:});
 
-                self.Ghelper = MXFunction({G_helpers},g_helpers);
-                self.Ghelper.init();
+                self.Ghelper = MXFunction('Ghelper',{G_helpers},g_helpers);
 
-                self.Ghelper_inv = MXFunction(g_helpers,{G_helpers});
-                self.Ghelper_inv.init();
+                self.Ghelper_inv = MXFunction('Ghelper_inv',g_helpers,{G_helpers});
             end
-
-            nlp = MXFunction(nlpIn('x',X,'p',P), nlpOut('f',objective,'g',poor_veccat(gl_pure{:})));
-            nlp.init();
             
-            poor_veccat(gl_pure{:})
-
-            self.solver = NlpSolver('ipopt', nlp);
-            self.solver.init();
+            
+            gl_pure_v = MX();
+            if ~isempty(gl_pure)
+               gl_pure_v = veccat(gl_pure{:});
+            end
+            if isvector(objective) && numel(objective)>1
+                F = vec(objective);
+                objective = 0.5*inner_prod(F,F);
+                FF = MXFunction('nlp',{X,P}, {F});
+                JF = FF.jacobian();
+                J_out = JF({X,P});
+                J = J_out{1}';
+                H = J*J';
+                sigma = MX.sym('sigma');
+                Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',sigma),hessLagOut('hess',sigma*H));
+                if isfield(options,'expand') && options.expand
+                   Hf = SXFunction(Hf);
+                end
+                options.hess_lag = Hf;
+            end
+            nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',objective,'g',gl_pure_v));
+            
+            keyboard
+            
+            codegen = false;
+            if isfield(options,'codegen')
+                codegen = options.codegen;
+                options = rmfield(options,'codegen');
+            end
+            
+            if codegen
+                solver = NlpSolver('solver','ipopt', nlp, options);
+                if isfield(options,'expand') && options.expand
+                   nlp.expand();
+                   nlp = SXFunction(nlp);
+                   nlp.init();
+                end
+                nlp = codegen_and_load('nlp',nlp);
+                if ~solver.jacG().isNull()
+                  options.jac_g = codegen_and_load('jacG',solver.jacG());
+                end
+                options.grad_f = codegen_and_load('gradF',solver.gradF());
+                if ~solver.hessLag().isNull()
+                  options.hess_lag = codegen_and_load('hessLag',solver.hessLag());
+                end
+            end
+            
+            self.solver = NlpSolver('solver','ipopt', nlp, options);
 
             % Save to class properties
             self.symbols      = symbols;
@@ -77,7 +120,11 @@ classdef optisolve
             self.helper_inv   = helper_inv;
             self.gl_equality  = gl_equality;
             
-            resolve(self);
+            self.resolve();
+        end
+        
+        function [] = jacspy(self)
+            spy(sparse(DMatrix(self.solver.jacG().output(),1)))
         end
         
         function [] = resolve(self)
@@ -86,10 +133,10 @@ classdef optisolve
             helper       = self.helper;
             helper_inv   = self.helper_inv;
             gl_equality  = self.gl_equality;
-            
+          
             if ~isempty(gl_equality)
                 % compose lbg
-                for i=1:self.Ghelper_inv.getNumInputs()
+                for i=1:self.Ghelper_inv.nIn()
                     if gl_equality(i)
                         self.Ghelper_inv.setInput(0,i-1);
                     else

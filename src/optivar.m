@@ -17,12 +17,21 @@ classdef optivar < OptimizationObject
     end
 
     methods
+        function [] = setInit(self,v)
+            self.init = v;
+        end
+        function [] = setLb(self,v)
+            self.lb = v;
+        end
+        function [] = setUb(self,v)
+            self.ub = v;
+        end
         function self = optivar(varargin)
            if isempty(varargin)
                shape = 1;
            elseif length(varargin)==1
                shape = varargin{1};
-           elseif length(varargin)==2
+           elseif length(varargin)>1
                shape = [varargin{1};varargin{2}];
            end
            

@@ -37,7 +37,11 @@ classdef OptimizationObject < casadi.MX
                dep = varargin{1}; 
             end
 
-            vars = getSymbols(el{:});
+            try
+                vars = symvar(veccat(el{:}));
+            catch
+                vars = {}; 
+            end
             
             syms = struct();
             

@@ -2,7 +2,7 @@ function [ varargout ] = optival( varargin )
     import casadi.*
     symbols = OptimizationObject.get_primitives(varargin);
     
-    f = MXFunction(symbols.x,varargin);
+    f = MXFunction('f',symbols.x,varargin);
     f.init();
     
     for i=1:length(symbols.x)
