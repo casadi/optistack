@@ -86,9 +86,7 @@ classdef optisolve
                 options.hess_lag = Hf;
             end
             nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',objective,'g',gl_pure_v));
-            
-            keyboard
-            
+
             codegen = false;
             if isfield(options,'codegen')
                 codegen = options.codegen;
