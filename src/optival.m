@@ -3,7 +3,6 @@ function [ varargout ] = optival( varargin )
     symbols = OptimizationObject.get_primitives(varargin);
     
     f = MXFunction('f',symbols.x,varargin);
-    f.init();
     
     for i=1:length(symbols.x)
        f.setInput(optival(symbols.x{i}),i-1); 

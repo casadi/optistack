@@ -38,10 +38,8 @@ classdef optisolve
             % helper functions for 'x'
             X = veccat(symbols.x{:});
             helper = MXFunction('helper',{X},symbols.x);
-            helper.init();
 
             helper_inv = MXFunction('helper_inv',symbols.x,{X});
-            helper_inv.init();
 
             % helper functions for 'p' if applicable
             if isfield(symbols,'p')
