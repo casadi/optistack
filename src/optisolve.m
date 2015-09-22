@@ -65,6 +65,17 @@ classdef optisolve
                 self.Ghelper_inv = MXFunction('Ghelper_inv',g_helpers,{G_helpers});
             end
             
+            codegen = false;
+            if isfield(options,'codegen')
+                codegen = options.codegen;
+                options = rmfield(options,'codegen');
+            end
+            
+            opt = struct;
+            if codegen
+                opt.jit = true;
+                opt.jit_options = struct('flags',char('-O3',''));
+            end
             
             gl_pure_v = MX();
             if ~isempty(gl_pure)
@@ -79,37 +90,18 @@ classdef optisolve
                 J = J_out{1}';
                 H = J*J';
                 sigma = MX.sym('sigma');
-                Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',sigma),hessLagOut('hess',sigma*H));
+                Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',sigma),hessLagOut('hess',sigma*H),opt);
                 if isfield(options,'expand') && options.expand
                    Hf = SXFunction(Hf);
                 end
                 options.hess_lag = Hf;
             end
-            nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',objective,'g',gl_pure_v));
+            
+            nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',objective,'g',gl_pure_v),opt);
 
-            codegen = false;
-            if isfield(options,'codegen')
-                codegen = options.codegen;
-                options = rmfield(options,'codegen');
+            if isfield(options,'expand') && options.expand
+               nlp = nlp.expand();
             end
-            
-            if codegen
-                solver = NlpSolver('solver','ipopt', nlp, options);
-                if isfield(options,'expand') && options.expand
-                   nlp.expand();
-                   nlp = SXFunction(nlp);
-                   nlp.init();
-                end
-                nlp = codegen_and_load('nlp',nlp);
-                if ~solver.jacG().isNull()
-                  options.jac_g = codegen_and_load('jacG',solver.jacG());
-                end
-                options.grad_f = codegen_and_load('gradF',solver.gradF());
-                if ~solver.hessLag().isNull()
-                  options.hess_lag = codegen_and_load('hessLag',solver.hessLag());
-                end
-            end
-            
             self.solver = NlpSolver('solver','ipopt', nlp, options);
 
             % Save to class properties
