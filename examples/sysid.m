@@ -28,10 +28,10 @@ u  = MX.sym('u');
 states = [y;dy];
 controls = u;
 
-M = MX.sym('x');
-c = MX.sym('c');
-k = MX.sym('k');
-k_NL = MX.sym('k_NL');
+M = optivar();
+c = optivar();
+k = optivar();
+k_NL = optivar();
 
 params = [M;c;k;k_NL];
 
@@ -89,30 +89,19 @@ X_symbolic = all_samples_out{1};
 
 e = y_data-X_symbolic(01,:)';
 
-% just-in-time compilation for extra speedup
-options = struct;
-options.jit = true;
-options.jit_options = struct('flags',char('-O3',''));
-
-nlp = MXFunction('nlp', nlpIn('x',params), nlpOut('f',0.5*inner_prod(e,e)),options);
-
-gradF = nlp.gradient();
-jacG = nlp.jacobian('x','g');
-
-gradF.derivative(0, 1);
-
-J = jacobian(e,params);
-sigma = MX.sym('sigma');
-hessLag = MXFunction('H',hessLagIn('x',params,'lam_f',sigma),hessLagOut('hess',sigma*J'*J),options);
+M.setInit(5);
+c.setInit(2.3);
+k.setInit(1);
+k_NL.setInit(4);
 
 options = struct;
-options.hess_lag = hessLag;
-options.grad_f = gradF;
-options.jac_g = jacG;
-solver = NlpSolver('solver','ipopt', nlp, options);
+options.codegen = true;
 
-sol = solver(struct('x0',param_guess));
+% Hand in a vector objective -> interpreted as 2-norm 
+% such t hat Gauss-Newton can be performed
+optisolve(e,{},options);
 
-sol.x.*scale
-
-assert(max(full(abs(sol.x.*scale-param_truth)))<1e-8)
+optival(M)*1e-6
+optival(c)*1e-4
+optival(k)
+optival(k_NL)
