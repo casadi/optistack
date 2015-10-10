@@ -114,7 +114,7 @@ optival(M)*1e-6
 optival(c)*1e-4
 optival(k)
 
-rms(optival(e))
+rms(optival(e_time))
 
 %%
 
@@ -165,8 +165,8 @@ wsym = MX.sym('w');
 
 % Note: solve should eventualluy be replaced by backslash (\),
 % but this is not yet supported in casadi (as of 2.4.1)
-Freal = @(R,I) D + C*solve(R + I*(solve(R,I)),B);
-Fimag = @(R,I) -C*solve(I + R*(solve(I,R)),B);
+Freal = @(R,I) D + C*solve(R + I*(solve(R,I,'lapacklu')),B,'lapacklu');
+Fimag = @(R,I) -C*solve(I + R*(solve(I,R,'lapacklu')),B,'lapacklu');
 
 Fmag = sqrt(Freal(-A,wsym*eye(2)).^2 + Fimag(-A,wsym*eye(2)).^2);
 
