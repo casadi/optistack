@@ -89,19 +89,60 @@ X_symbolic = all_samples_out{1};
 
 e = y_data-X_symbolic(01,:)';
 
+M.setInit(param_guess(1));
+c.setInit(param_guess(2));
+k.setInit(param_guess(3));
+k_NL.setInit(param_guess(4));
+
+options = struct;
+options.codegen = true;
+
+disp('Single shooting...')
+
+% Hand in a vector objective -> interpreted as 2-norm
+% such t hat Gauss-Newton can be performed
+optisolve(e,{},options);
+optival(M)*1e-6
+optival(c)*1e-4
+optival(k)
+optival(k_NL)
+
+rms(optival(e))
+
+%%%%%%%%%%%% Identifying the simulated system: multiple shooting strategy %%%%%%%%%%
+
+
+disp('Multiple shooting...')
+
+X = optivar(2, N);
+
+params_scale = [1e-6*M;c*1e-4;k;k_NL];
+
+Xn = one_sample.map({X, u_data', params_scale});
+Xn = Xn{1};
+
+% gap-closing constraints
+gaps = Xn(:,1:end-1)-X(:,2:end);
+g = gaps == 0;
+
+e = (y_data-Xn(1,:)');
+
 M.setInit(5);
 c.setInit(2.3);
 k.setInit(1);
 k_NL.setInit(4);
+X.setInit([ y_data [diff(full(y_data))*fs;0]]');
 
 options = struct;
 options.codegen = true;
 
 % Hand in a vector objective -> interpreted as 2-norm 
-% such t hat Gauss-Newton can be performed
-optisolve(e,{},options);
+% such that Gauss-Newton can be performed
+optisolve(e,{g},options);
 
 optival(M)*1e-6
 optival(c)*1e-4
 optival(k)
 optival(k_NL)
+
+rms(optival(e))

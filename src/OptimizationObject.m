@@ -44,7 +44,6 @@ classdef OptimizationObject < casadi.MX
             end
             
             syms = struct();
-            
 
             for i=1:length(vars)
                 v = vars{i};
