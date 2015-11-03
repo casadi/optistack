@@ -31,7 +31,6 @@ classdef optisolve
             if ~iscell(constraints) || ~isvector(constraints)
                 error('Constraints must be given as cell array: {x>=0,y<=0}');
             end
-            length(constraints),size(constraints)
             if length(constraints)~=size(constraints,2)
                 constraints = constraints';
             end
