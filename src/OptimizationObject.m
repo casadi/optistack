@@ -11,6 +11,9 @@ classdef OptimizationObject < casadi.MX
     end
     
     methods
+        function n = numArgumentsFromSubscript(self,s,callingContext)
+           n=1;
+        end
         function self = OptimizationObject(shape,name)
            if isscalar(shape)
                shape = [shape 1];
