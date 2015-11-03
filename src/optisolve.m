@@ -28,9 +28,14 @@ classdef optisolve
 
             import casadi.*
 
-            if ~iscell(constraints)
+            if ~iscell(constraints) || ~isvector(constraints)
                 error('Constraints must be given as cell array: {x>=0,y<=0}');
             end
+            length(constraints),size(constraints)
+            if length(constraints)~=size(constraints,2)
+                constraints = constraints';
+            end
+            
 
             [ gl_pure, gl_equality] = sort_constraints( constraints );
             symbols = OptimizationObject.get_primitives({objective gl_pure{:}});
@@ -137,6 +142,7 @@ classdef optisolve
                 self.solver.setInput(0,'ubg');
             end
             
+
             % compose lbx
             for i=1:length(symbols.x)
               helper_inv.setInput(symbols.x{i}.lb,i-1);
