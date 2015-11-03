@@ -25,6 +25,15 @@ classdef OptimizationObject < casadi.MX
         function [] = setValue(self,value)
             self.value = value;
         end
+        function r = reshape(self,a,b)
+           a
+           b
+           if size(self,1) == a && size(self,2)==b
+              r = self;
+           else
+              r = casadi.reshape(self,a,b);
+           end
+        end
     end
     methods(Static)
         function [ syms ] = get_primitives( el, varargin )
