@@ -28,7 +28,7 @@ classdef optisolve
 
             import casadi.*
 
-            if ~iscell(constraints) || ~isvector(constraints)
+            if ~iscell(constraints) || ~(isvector(constraints) || isempty(constraints))
                 error('Constraints must be given as cell array: {x>=0,y<=0}');
             end
             if length(constraints)~=size(constraints,2)
