@@ -1,7 +1,5 @@
 # optistack
-A simple matlab interface to [casadi](http://casadi.org)
-
-The goal of this project is to provide a Yalmip-like Matlab interface to casadi.
+The goal of this project is to provide a Yalmip-like wrapper around the Matlab interface of [casadi](http://casadi.org).
 
 Example:
 ```matlab
@@ -30,3 +28,13 @@ Declare decision variable | `x = sdpvar(nrows,ncols)`   | `x = optivar(nrows,nco
 Set initial values        | `assign(x,x0)`              | `x.setInit(x0)`
 Solve a problem           | `optimize([x==0],f)`        | `optisolve(f,{x==0})`
 Obtain numeric results    | `value(x)`                  | `optival(x)`
+
+
+More functionality:
+`optivar` inherits from `casadi.MX` class. This means [all the usual operations](http://casadi.sourceforge.net/v2.4.1/api/html/d9/dc2/group__expression__tools.html) for `MX` are possible.
+
+
+
+
+
+
