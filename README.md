@@ -13,7 +13,7 @@ optival(y)
 ```
 
 Installation:
- * Obtain CasADi for [Windows](http://files.casadi.org/2.4.1/windows/casadi-matlabR2014a-v2.4.1.zip) or [Linux](http://files.casadi.org/2.4.1/linux/casadi-matlabR2014a-v2.4.1.tar.gz) and unzip it.
+ * Obtain CasADi for [Windows](http://files.casadi.org/2.4.1/windows/casadi-matlabR2014a-v2.4.1.zip) or [Linux](http://files.casadi.org/2.4.1/linux/casadi-matlabR2014a-v2.4.1.tar.gz) and unzip it. ( see also [older matlab for windows](http://files.casadi.org/commits/d40042e/windows/casadi-matlabR2013a-d40042e.zip) )
  * Add the unzipped directory to the Matlab path (`addpath('casadi_unzippeddir')`)
  * Obtain [Optistack](https://github.com/casadi/optistack/archive/master.zip) and unzip it.
  * Add the src directory to the Matlab path (`addpath('optistack_unzippeddir/src')`)
