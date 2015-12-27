@@ -107,7 +107,8 @@ optival(c)*1e-4
 optival(k)
 optival(k_NL)
 
-rms(optival(e))
+%rms(optival(e))
+sqrt(mean(optival(e).^2)) % rms is part of the signal toolbox
 
 %%%%%%%%%%%% Identifying the simulated system: multiple shooting strategy %%%%%%%%%%
 
@@ -145,4 +146,5 @@ optival(c)*1e-4
 optival(k)
 optival(k_NL)
 
-rms(optival(e))
+% rms(optival(e))
+sqrt(mean(optival(e).^2)) % rms is part of the signal toolbox

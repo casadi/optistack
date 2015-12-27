@@ -13,6 +13,7 @@ function [ varargout ] = optival( varargin )
     
     if hassymbols
         for i=1:length(symbolsx)
+           666
            f.setInput(optival(symbolsx{i}),i-1); 
         end
     end

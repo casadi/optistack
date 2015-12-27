@@ -125,7 +125,7 @@ classdef optisolve
             helper       = self.helper;
             helper_inv   = self.helper_inv;
             gl_equality  = self.gl_equality;
-          
+            1
             if ~isempty(gl_equality)
                 % compose lbg
                 for i=1:self.Ghelper_inv.nIn()
@@ -135,52 +135,52 @@ classdef optisolve
                         self.Ghelper_inv.setInput(-inf,i-1);
                     end
                 end
-
+                2
                 self.Ghelper_inv.evaluate();
                 self.solver.setInput(self.Ghelper_inv.getOutput(),'lbg');
                 self.solver.setInput(0,'ubg');
             end
-            
+            3
 
             % compose lbx
             for i=1:length(symbols.x)
               helper_inv.setInput(symbols.x{i}.lb,i-1);
             end
-
+            4
             helper_inv.evaluate();
             self.solver.setInput(helper_inv.getOutput(),'lbx');  
-            
+            5
             % compose x0
             for i=1:length(symbols.x)
               helper_inv.setInput(symbols.x{i}.init,i-1);
             end
-
+            6
             helper_inv.evaluate();
             self.solver.setInput(helper_inv.getOutput(),'x0'); 
-
+            7
             % compose ubx
             for i=1:length(symbols.x)
               helper_inv.setInput(symbols.x{i}.ub,i-1);
             end
-
+            8
             helper_inv.evaluate();
             self.solver.setInput(helper_inv.getOutput(),'ubx');    
 
-
+            9
             if isfield(symbols,'p')
                 % compose p0
                 for i=1:length(symbols.p)
                   self.Phelper_inv.setInput(symbols.p{i}.value,i-1);
                 end
 
-
+                10
                 self.Phelper_inv.evaluate();
                 self.solver.setInput(self.Phelper_inv.getOutput(),'p');
 
             end
    
             self.solver.evaluate();
-
+            11
             helper.setInput(self.solver.getOutput('x'));
             helper.evaluate();
 

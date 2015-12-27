@@ -1,0 +1,35 @@
+env: 
+  global: 
+    - CASADIVERSION=2.4.2
+    - MATLABRELEASE=R2014b
+    
+before_script:
+  - set -e
+
+script:
+  - popd
+  - cd examples
+  - matlab -nodisplay -nosplash -nodesktop -nojvm -r "addpath('/home/travis/build/casadi-build/'),addpath('/home/travis/build/casadi/optistack/src'),savepath,quit"
+  - matlab -nodisplay -nosplash -nodesktop -nojvm -r "sysid,multipleshooting,misc,inverse,rosenbrock,fit,codegen,quit"
+  
+branches:
+  except:
+    - /.*appveyor.*/
+
+before_install:
+  - pushd ../../
+  - git clone https://github.com/casadi/testbot.git
+  - pushd testbot && recipes/setup.sh && popd
+  - wget http://sourceforge.net/projects/casadi/files/CasADi/$CASADIVERSION/linux/casadi-matlab$MATLABRELEASE-v$CASADIVERSION.tar.gz/download -O casadi.tar.gz
+  - mkdir casadi-build && tar -xf casadi.tar.gz -C casadi-build
+  - testbot/recipes/fetch.sh matlab$MATLABRELEASE.tar.gz
+  - mkdir matlab && tar -xf matlab$MATLABRELEASE.tar.gz -C matlab
+  - source /home/travis/build/testbot/restricted/env.sh
+  - sudo bash -c "echo '127.0.0.1	$FLEX_SERVER' >> /etc/hosts;echo '127.0.0.1	$FLEX_HOSTNAME' >> /etc/hosts"
+  - sudo hostname $FLEX_HOSTNAME
+  - mkdir -p ~/.matlab/${MATLABRELEASE}_licenses/
+  - echo -e "SERVER $FLEX_SERVER ANY 1715\nUSE_SERVER" > ~/.matlab/${MATLABRELEASE}_licenses/license.lic
+  - ssh-keyscan $GATE_SERVER >> ~/.ssh/known_hosts
+  - ssh -i /home/travis/build/testbot/id_rsa_travis $USER_GATE@$GATE_SERVER -L 1701:$FLEX_SERVER:1701 -L 1719:$FLEX_SERVER:1719 -L 1718:$FLEX_SERVER:1718 -L 2015:$FLEX_SERVER:2015 -L 1815:$FLEX_SERVER:1815 -L 1715:$FLEX_SERVER:1715 -N &
+  - export PATH=/home/travis/build/matlab/bin/:$PATH
+language: cpp
