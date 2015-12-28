@@ -1,5 +1,7 @@
+[![Build Status](https://travis-ci.org/casadi/optistack.png?branch=master)](https://travis-ci.org/casadi/optistack)
+
 # optistack
-The goal of this project is to provide a Yalmip-like wrapper around the Matlab interface of [casadi](http://casadi.org).
+The goal of this project is to provide a Yalmip-like wrapper around the Matlab interface of [CasADi](http://casadi.org).
 
 Example:
 ```matlab
