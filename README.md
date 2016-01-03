@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/casadi/optistack.png?branch=master)](https://travis-ci.org/casadi/optistack)
 
 # optistack
-The goal of this project is to provide a Yalmip-like wrapper around the Matlab interface of [CasADi](http://casadi.org).
+The goal of this project is to provide a Yalmip-like wrapper around the Matlab interface of [CasADi](http://casadi.org),  resulting in an easy and fast way to solve (parametric) NLPs.
 
 Example:
 ```matlab
@@ -43,6 +43,5 @@ More functionality:
 
 
 
-
-
+Note: there is also a [python version](https://github.com/casadi/python-optistack/) available.
 
