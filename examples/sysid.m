@@ -95,7 +95,7 @@ k.setInit(param_guess(3));
 k_NL.setInit(param_guess(4));
 
 options = struct;
-% options.codegen = true; % unfortunately, there is a bug on Windows ( https://github.com/casadi/casadi/issues/1599 )
+options.codegen = true;
 
 disp('Single shooting...')
 
