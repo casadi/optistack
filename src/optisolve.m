@@ -1,4 +1,4 @@
-classdef optisolve
+classdef optisolve < handle
     
     properties
             symbols
@@ -9,6 +9,8 @@ classdef optisolve
             Ghelper
             helper_inv
             gl_equality
+            callback1
+            callback2
     end
     
     methods
@@ -71,6 +73,15 @@ classdef optisolve
             if isfield(options,'codegen')
                 codegen = options.codegen;
                 options = rmfield(options,'codegen');
+            end
+            
+            if isfield(options,'callback')
+                mcallback = options.callback;
+                options = rmfield(options,'callback');
+                
+                self.callback1 = MyCallback(self, mcallback);
+                self.callback2 = Callback(self.callback1);
+                options.iteration_callback = self.callback2;
             end
             
             opt = struct;
@@ -175,13 +186,17 @@ classdef optisolve
             end
    
             self.solver.evaluate();
+            self.readoutputs(self.solver);
+            
+         end
+            
+         function [] = readoutputs(self,solver)
+            self.helper.setInput(solver.getOutput(0));
+            self.helper.evaluate();
 
-            helper.setInput(self.solver.getOutput('x'));
-            helper.evaluate();
-
-            for i=1:length(symbols.x)
-              v = symbols.x{i};
-              v.setValue(full(helper.getOutput(i-1)));
+            for i=1:length(self.symbols.x)
+              v = self.symbols.x{i};
+              v.setValue(full(self.helper.getOutput(i-1)));
             end
 
          end
