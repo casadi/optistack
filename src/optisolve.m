@@ -39,7 +39,9 @@ classdef optisolve < handle
             
 
             [ gl_pure, gl_equality] = sort_constraints( constraints );
-            symbols = OptimizationObject.get_primitives({objective gl_pure{:}});
+            [ scalar_objectives, twonorm_objectives, total_scalar_objective, total_objective ] = sort_objectives( objective );
+            
+            symbols = OptimizationObject.get_primitives({total_objective gl_pure{:}});
             
             % helper functions for 'x'
             X = veccat(symbols.x{:});
@@ -94,23 +96,34 @@ classdef optisolve < handle
             if ~isempty(gl_pure)
                gl_pure_v = veccat(gl_pure{:});
             end
-            if isvector(objective) && numel(objective)>1
-                F = vec(objective);
-                objective = 0.5*inner_prod(F,F);
-                FF = MXFunction('nlp',{X,P}, {F});
+            if ~isempty(twonorm_objectives)
+                F = [twonorm_objectives{:}];
+                FF = MXFunction('nlp',{X,P},{F});
+
                 JF = FF.jacobian();
                 J_out = JF({X,P});
                 J = J_out{1}';
                 H = J*J';
-                sigma = MX.sym('sigma');
-                Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',sigma),hessLagOut('hess',sigma*H),opt);
+                lam_f = MX.sym('lam_f');
+                if isempty(scalar_objectives)
+                    Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',lam_f),hessLagOut('hess',lam_f*H),opt);
+                else
+                    lam_g = MX.sym('lam_g',size(gl_pure_v,1));
+                    S = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_scalar_objective,'g',gl_pure_v));
+                    dS = S.derivative(0,1);
+                    dS.printDimensions();
+                    Hs = dS.jacobian(0,2,false,true);
+                    Hs_out = Hs({X,P,lam_f,lam_g});
+                    Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',lam_f,'lam_g',lam_g),hessLagOut('hess',lam_f*H+Hs_out{1}),opt);
+                end
                 if isfield(options,'expand') && options.expand
                    Hf = SXFunction(Hf);
                 end
+                
                 options.hess_lag = Hf;
             end
             
-            nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',objective,'g',gl_pure_v),opt);
+            nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_objective,'g',gl_pure_v),opt);
 
             if isfield(options,'expand') && options.expand
                nlp = nlp.expand();
