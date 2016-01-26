@@ -109,12 +109,11 @@ classdef optisolve < handle
                     Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',lam_f),hessLagOut('hess',lam_f*H),opt);
                 else
                     lam_g = MX.sym('lam_g',size(gl_pure_v,1));
-                    S = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_scalar_objective,'g',gl_pure_v));
+                    S = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_scalar_objective));
                     dS = S.derivative(0,1);
-                    dS.printDimensions();
                     Hs = dS.jacobian(0,2,false,true);
-                    Hs_out = Hs({X,P,lam_f,lam_g});
-                    Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',lam_f,'lam_g',lam_g),hessLagOut('hess',lam_f*H+Hs_out{1}),opt);
+                    Hs_out = Hs({X,P,lam_f,0});
+                    Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',lam_f),hessLagOut('hess',lam_f*H+Hs_out{1}),opt);
                 end
                 if isfield(options,'expand') && options.expand
                    Hf = SXFunction(Hf);
