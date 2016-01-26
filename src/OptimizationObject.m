@@ -49,11 +49,16 @@ classdef OptimizationObject < casadi.MX
                dep = varargin{1}; 
             end
 
+            orig_state = warning;
+            warning('off','all')
+
             try
                 vars = symvar(veccat(el{:}));
             catch
+
                 vars = {}; 
             end
+            warning(orig_state);
             
             syms = struct();
 
