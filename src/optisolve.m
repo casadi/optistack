@@ -11,6 +11,7 @@ classdef optisolve < handle
             gl_equality
             callback1
             callback2
+            extra
     end
     
     methods
@@ -87,10 +88,6 @@ classdef optisolve < handle
             end
             
             opt = struct;
-            if codegen
-                opt.jit = true;
-                opt.jit_options = struct('flags',char('-O3',''));
-            end
             
             gl_pure_v = MX();
             if ~isempty(gl_pure)
@@ -127,6 +124,56 @@ classdef optisolve < handle
             if isfield(options,'expand') && options.expand
                nlp = nlp.expand();
             end
+
+            if codegen
+                disp('Computing derivatives')
+                grad_f = nlp.gradient();
+                jac_g = nlp.jacobian(0,1);
+                if isfield(options,'hess_lag')
+                  hess_lag = options.hess_lag;
+                else
+                  grad_lag = nlp.derivative(0,1);
+                  hess_lag = grad_lag.jacobian(0,2,false,true);
+                end
+                disp('Codegenerating')
+                nlp.generate('nlp');
+                grad_f.generate('grad_f');
+                jac_g.generate('jac_g');
+                hess_lag.generate('hess_lag');
+                
+                opt.jit = true;
+                opt.jit_options = struct('flags',char('-O3',''));
+
+                
+                disp('Compiling')
+                nlp_compiler = Compiler('nlp.c','clang',struct('flags',char('-O3','')));
+                nlp = ExternalFunction('nlp',nlp_compiler,struct);
+                grad_f_compiler = Compiler('grad_f.c','clang',struct('flags',char('-O3','')));
+                grad_f = ExternalFunction('grad_f',grad_f_compiler,struct);
+                jac_g_compiler = Compiler('jac_g.c','clang',struct('flags',char('-O3','')));
+                jac_g = ExternalFunction('jac_g',jac_g_compiler,struct);
+                hess_lag_compiler = Compiler('hess_lag.c','clang',struct('flags',char('-O3','')));
+                hess_lag = ExternalFunction('hess_lag',hess_lag_compiler,struct);
+                
+                extra = struct;
+                extra.nlp = nlp;
+                extra.nlp_compiler = nlp_compiler;
+                extra.grad_f = grad_f;
+                extra.grad_f_compiler = grad_f_compiler;
+                extra.jac_g = jac_g;
+                extra.jac_g_compiler = jac_g_compiler;
+                extra.hess_lag = hess_lag;
+                extra.hess_lag_compiler = hess_lag_compiler;
+                
+                self.extra = extra;
+                
+                options.grad_f = grad_f;
+                options.jac_g = jac_g;
+                options.hess_lag = hess_lag;
+             
+            end
+
+
             self.solver = NlpSolver('solver','ipopt', nlp, options);
 
             % Save to class properties
