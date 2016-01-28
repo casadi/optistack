@@ -119,6 +119,8 @@ classdef optisolve < handle
                 options.hess_lag = Hf;
             end
             
+            opt.starcoloring_threshold = 1000;
+            
             nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_objective,'g',gl_pure_v),opt);
 
             if isfield(options,'expand') && options.expand
@@ -141,18 +143,16 @@ classdef optisolve < handle
                 jac_g.generate('jac_g');
                 hess_lag.generate('hess_lag');
                 
-                opt.jit = true;
-                opt.jit_options = struct('flags',char('-O3',''));
+                jit_options = struct('flags',char('-O3',''),'plugin_libs',char('linearsolver_lapacklu',''));
 
-                
                 disp('Compiling')
-                nlp_compiler = Compiler('nlp.c','clang',struct('flags',char('-O3','')));
+                nlp_compiler = Compiler('nlp.c','clang',jit_options);
                 nlp = ExternalFunction('nlp',nlp_compiler,struct);
-                grad_f_compiler = Compiler('grad_f.c','clang',struct('flags',char('-O3','')));
+                grad_f_compiler = Compiler('grad_f.c','clang',jit_options);
                 grad_f = ExternalFunction('grad_f',grad_f_compiler,struct);
-                jac_g_compiler = Compiler('jac_g.c','clang',struct('flags',char('-O3','')));
+                jac_g_compiler = Compiler('jac_g.c','clang',jit_options);
                 jac_g = ExternalFunction('jac_g',jac_g_compiler,struct);
-                hess_lag_compiler = Compiler('hess_lag.c','clang',struct('flags',char('-O3','')));
+                hess_lag_compiler = Compiler('hess_lag.c','clang',jit_options);
                 hess_lag = ExternalFunction('hess_lag',hess_lag_compiler,struct);
                 
                 extra = struct;
