@@ -19,8 +19,8 @@ Installation:
 
 Windows   |   Linux     |    Mac
 ----------|-------------|--------------
-[R2014a](http://files.casadi.org/2.4.2/windows/casadi-matlabR2014a-v2.4.2.zip) or later |    [R2014a](http://files.casadi.org/2.4.2/linux/casadi-matlabR2014a-v2.4.2.tar.gz) or later      | [R2015a](http://files.casadi.org/2.4.2/osx/casadi-matlabR2015a-v2.4.2.tar.gz) or later
-[R2013a](http://files.casadi.org/2.4.2/windows/casadi-matlabR2013a-v2.4.2.zip) or later | | [R2014a](http://files.casadi.org/2.4.2/osx/casadi-matlabR2014a-v2.4.2.tar.gz) or later |
+[R2014a](http://files.casadi.org/2.4.3/windows/casadi-matlabR2014a-v2.4.3.zip) or later |    [R2014a](http://files.casadi.org/2.4.3/linux/casadi-matlabR2014a-v2.4.3.tar.gz) or later      | [R2015a](http://files.casadi.org/2.4.3/osx/casadi-matlabR2015a-v2.4.3.tar.gz) or later
+[R2013a](http://files.casadi.org/2.4.3/windows/casadi-matlabR2013a-v2.4.3.zip) or later | | [R2014a](http://files.casadi.org/2.4.3/osx/casadi-matlabR2014a-v2.4.3.tar.gz) or later |
 
  * Add the unzipped directory to the Matlab path (`addpath('casadi_unzippeddir')`)
  * Obtain [Optistack](https://github.com/casadi/optistack/archive/master.zip) and unzip it.
