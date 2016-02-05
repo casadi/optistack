@@ -114,7 +114,8 @@ optival(M)*1e-6
 optival(c)*1e-4
 optival(k)
 
-rms(optival(e_time))
+%rms(optival(e_time))
+sqrt(mean(optival(e_time).^2)) % rms is part of the signal toolbox
 
 %%
 
@@ -163,22 +164,20 @@ f_truth = squeeze(freqresp(ss(A_truth,B_truth,C_truth,D_truth),w_fit,'rad/s'));
 % the magnitude of frequency reponse for one frequency
 wsym = MX.sym('w');
 
-% Note: solve should eventualluy be replaced by backslash (\),
+% Note: solve should eventually be replaced by backslash (\),
 % but this is not yet supported in casadi (as of 2.4.1)
 Freal = @(R,I) D + C*solve(R + I*(solve(R,I,'lapacklu')),B,'lapacklu');
 Fimag = @(R,I) -C*solve(I + R*(solve(I,R,'lapacklu')),B,'lapacklu');
 
-Fmag = sqrt(Freal(-A,wsym*eye(2)).^2 + Fimag(-A,wsym*eye(2)).^2);
+Fmag = MXFunction('Fmag',{wsym,params},{Freal(-A,wsym*eye(2)),Fimag(-A,wsym*eye(2))});
 
-Fmag = MXFunction('Fmag',{wsym,params},{Fmag});
-
-% Derive a funciton that evaluate Fmag for all frequencies
+% Derive a function that evaluate Fmag for all frequencies
 Fmag_all = Fmag.map('map',N_w);
 
 out = Fmag_all({w_fit,repmat(params_scale,1,N_w)});
 
 % The error between modeled frequency response and the truth
-e_freq = log10(out{1}') - log10(abs(f_truth));
+e_freq = [out{1}' - real(f_truth);out{2}' - imag(f_truth)];
 
 weight = 8;
 
@@ -186,7 +185,7 @@ e_total = [e_time;weight*e_freq];
 
 options = struct;
 % Note: codegen of linear solvers is missing in casadi still; that makes this slow
-options.codegen = false;
+options.codegen = true;
 options.tol = 1e-5;
 
 optisolve(e_total,{},options);
