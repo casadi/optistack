@@ -1,6 +1,6 @@
 env: 
   global: 
-    - CASADIVERSION=2.4.2
+    - CASADIVERSION=2.4.3
     - MATLABRELEASE=R2014b
     
 before_script:
