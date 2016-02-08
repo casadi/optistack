@@ -34,7 +34,7 @@ Cheat sheet:
 ------------------------- | --------------------------- | -----------------------------
 Declare decision variable | `x = sdpvar(nrows,ncols)`   | `x = optivar(nrows,ncols)`
 Set initial values        | `assign(x,x0)`              | `x.setInit(x0)`
-Solve a problem           | `optimize([x==0],f)`        | `optisolve(f,{x==0})`
+Solve a problem           | `optimize([g(x)==0],f)`     | `optisolve(f,{g(x)==0})`
 Obtain numeric results    | `value(x)`                  | `optival(x)`
 
 
