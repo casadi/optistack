@@ -17,7 +17,7 @@ classdef optipar < OptimizationObject
                shape = 1;
            elseif length(varargin)==1
                shape = varargin{1};
-           elseif length(varargin)==2
+           elseif length(varargin)>1
                shape = [varargin{1};varargin{2}];
            end
            
