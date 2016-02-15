@@ -1,3 +1,5 @@
+assert(false,'Requires some funcitonality from 2.4 which has not been transferred to 3.0 yet.')
+
 global x
 global y
 

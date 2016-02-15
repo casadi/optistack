@@ -9,19 +9,21 @@ function [ varargout ] = optival( varargin )
        hassymbols = true;
     end
     
-    f = MXFunction('f',symbolsx,varargin);
+    f = Function('f',symbolsx,varargin);
     
+    f_inputs = cell(1,f.n_in);
     if hassymbols
         for i=1:length(symbolsx)
-           f.setInput(optival(symbolsx{i}),i-1); 
+           f_inputs{i} = optival(symbolsx{i}); 
         end
+    else
+        f_inputs{1} = 0;
     end
     
-    f.evaluate();
-    
+    f_out = f(f_inputs);
     varargout = {};
     for i=1:length(varargin)
-       varargout = {varargout{:},full(f.getOutput(i-1))};
+       varargout = {varargout{:},full(f_out{i})};
     end
     
 end

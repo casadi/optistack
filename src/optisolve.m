@@ -46,15 +46,15 @@ classdef optisolve < handle
             
             % helper functions for 'x'
             X = veccat(symbols.x{:});
-            helper = MXFunction('helper',{X},symbols.x);
+            helper = Function('helper',{X},symbols.x);
 
-            helper_inv = MXFunction('helper_inv',symbols.x,{X});
+            helper_inv = Function('helper_inv',symbols.x,{X});
 
             % helper functions for 'p' if applicable
             if isfield(symbols,'p')
               P = veccat(symbols.p{:});
 
-              self.Phelper_inv = MXFunction('Phelper_inv',symbols.p,{P});
+              self.Phelper_inv = Function('Phelper_inv',symbols.p,{P});
               
             else
               P = MX.sym('p',0,1);
@@ -67,9 +67,9 @@ classdef optisolve < handle
                 end
                 G_helpers = veccat(g_helpers{:});
 
-                self.Ghelper = MXFunction('Ghelper',{G_helpers},g_helpers);
+                self.Ghelper = Function('Ghelper',{G_helpers},g_helpers);
 
-                self.Ghelper_inv = MXFunction('Ghelper_inv',g_helpers,{G_helpers});
+                self.Ghelper_inv = Function('Ghelper_inv',g_helpers,{G_helpers});
             end
             
             codegen = false;
@@ -95,7 +95,7 @@ classdef optisolve < handle
             end
             if ~isempty(twonorm_objectives)
                 F = [twonorm_objectives{:}];
-                FF = MXFunction('nlp',{X,P},{F});
+                FF = Function('nlp',{X,P},{F});
 
                 JF = FF.jacobian();
                 J_out = JF({X,P});
@@ -103,28 +103,30 @@ classdef optisolve < handle
                 H = J*J';
                 lam_f = MX.sym('lam_f');
                 if isempty(scalar_objectives)
-                    Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',lam_f),hessLagOut('hess',lam_f*H),opt);
+                    Hf = Function('nlp_hess_l',struct('x',X,'p',P,'lam_f',lam_f,'hess_gamma_x_x',lam_f*triu(H)),char('x', 'p', 'lam_f', 'lam_g'),char('hess_gamma_x_x'),opt);
                 else
                     lam_g = MX.sym('lam_g',size(gl_pure_v,1));
-                    S = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_scalar_objective));
+                    S = Function('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_scalar_objective));
                     dS = S.derivative(0,1);
                     Hs = dS.jacobian(0,2,false,true);
                     Hs_out = Hs({X,P,lam_f,0});
-                    Hf = MXFunction('H',hessLagIn('x',X,'p',P,'lam_f',lam_f),hessLagOut('hess',lam_f*H+Hs_out{1}),opt);
+                    Hf = Function('nlp_hess_l',hessLagIn('x',X,'p',P,'lam_f',lam_f),hessLagOut('hess',lam_f*H+Hs_out{1}),opt);
                 end
                 if isfield(options,'expand') && options.expand
-                   Hf = SXFunction(Hf);
+                   Hf = Hf.expand();
                 end
                 
                 options.hess_lag = Hf;
             end
             
-            opt.starcoloring_threshold = 1000;
+            %opt.starcoloring_threshold = 1000;
+            opt.monitor = char('eval_hess','eval_f','eval_grad_f','eval_jac_g');
             
-            nlp = MXFunction('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_objective,'g',gl_pure_v),opt);
+            nlp = Function('nlp',struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v),char('x','p'),char('f','g'),opt);
 
             if isfield(options,'expand') && options.expand
                nlp = nlp.expand();
+               options = rmfield(options,'expand');
             end
 
             if codegen
@@ -136,24 +138,45 @@ classdef optisolve < handle
                 else
                   grad_lag = nlp.derivative(0,1);
                   hess_lag = grad_lag.jacobian(0,2,false,true);
+                  
+                  hess_lag_ins = struct('x',X,'p',P,'lam_f',MX.sym('lam_f',hess_lag.sparsity_in(2)),'lam_g',MX.sym('lam_g',hess_lag.sparsity_in(3)));
+                  hess_lag_ins2 = struct('der_x',X,'der_p',P);
+                  hess_lag_ins2.adj0_f = hess_lag_ins.lam_f;
+                  hess_lag_ins2.adj0_g = hess_lag_ins.lam_g;
+                  
+                  out = hess_lag(hess_lag_ins2);
+                  hess_lag_ins.hess_gamma_x_x = triu(out.dadj0_x_dder_x);
+                  hess_lag = Function('nlp_hess_l',hess_lag_ins,char('x','p','lam_f','lam_g'),char('hess_gamma_x_x'));
+                  hess_lag.generate('nlp_hess_l');
+
                 end
                 disp('Codegenerating')
                 nlp.generate('nlp');
-                grad_f.generate('grad_f');
-                jac_g.generate('jac_g');
-                hess_lag.generate('hess_lag');
+                grad_f_ins = struct('x',X,'p',P);
+                out = grad_f(grad_f_ins);
+                grad_f_ins.grad_f_x = out.grad;
+                grad_f_ins.f = out.f;
+                grad_f = Function('nlp_grad_f',grad_f_ins,char('x','p'),char('f','grad_f_x'));
+                grad_f.generate('nlp_grad_f');
+                jac_g_ins = struct('x',X,'p',P);
+                out = jac_g(jac_g_ins);
+                jac_g_ins.jac_g_x = out.dg_dx;
+                jac_g_ins.g = out.g;
+                jac_g = Function('nlp_jac_g',jac_g_ins,char('x','p'),char('g','jac_g_x'));
+                jac_g.generate('nlp_jac_g');
+                hess_lag.generate('nlp_hess_l');
                 
-                jit_options = struct('flags',char('-O3',''),'plugin_libs',char('linearsolver_lapacklu',''));
+                jit_options = struct('flags',char('-O3',''));%,'plugin_libs',char('linearsolver_lapacklu',''));
 
                 disp('Compiling')
                 nlp_compiler = Compiler('nlp.c','clang',jit_options);
-                nlp = ExternalFunction('nlp',nlp_compiler,struct);
-                grad_f_compiler = Compiler('grad_f.c','clang',jit_options);
-                grad_f = ExternalFunction('grad_f',grad_f_compiler,struct);
-                jac_g_compiler = Compiler('jac_g.c','clang',jit_options);
-                jac_g = ExternalFunction('jac_g',jac_g_compiler,struct);
-                hess_lag_compiler = Compiler('hess_lag.c','clang',jit_options);
-                hess_lag = ExternalFunction('hess_lag',hess_lag_compiler,struct);
+                nlp = external('nlp',nlp_compiler,struct);
+                grad_f_compiler = Compiler('nlp_grad_f.c','clang',jit_options);
+                grad_f = external('nlp_grad_f',grad_f_compiler,struct);
+                jac_g_compiler = Compiler('nlp_jac_g.c','clang',jit_options);
+                jac_g = external('nlp_jac_g',jac_g_compiler,struct);
+                hess_lag_compiler = Compiler('nlp_hess_l.c','clang',jit_options);
+                hess_lag = external('nlp_hess_l',hess_lag_compiler,struct);
                 
                 extra = struct;
                 extra.nlp = nlp;
@@ -174,7 +197,7 @@ classdef optisolve < handle
             end
 
 
-            self.solver = NlpSolver('solver','ipopt', nlp, options);
+            self.solver = nlpsol('solver','ipopt', nlp, options);
 
             % Save to class properties
             self.symbols      = symbols;
@@ -186,7 +209,7 @@ classdef optisolve < handle
         end
         
         function [] = jacspy(self)
-            spy(sparse(DMatrix(self.solver.jacG().output(),1)))
+            spy(sparse(DM(self.solver.jacG().output(),1)))
         end
         
         function [] = resolve(self)
@@ -195,67 +218,70 @@ classdef optisolve < handle
             helper       = self.helper;
             helper_inv   = self.helper_inv;
             gl_equality  = self.gl_equality;
+            solver_inputs = struct;
             if ~isempty(gl_equality)
+                Ghelper_inv_inputs = cell(1,self.Ghelper_inv.n_in);
                 % compose lbg
-                for i=1:self.Ghelper_inv.nIn()
+                for i=1:self.Ghelper_inv.n_in()
                     if gl_equality(i)
-                        self.Ghelper_inv.setInput(0,i-1);
+                        Ghelper_inv_inputs{i} = 0;
                     else
-                        self.Ghelper_inv.setInput(-inf,i-1);
+                        Ghelper_inv_inputs{i} = -inf;
                     end
                 end
-                self.Ghelper_inv.evaluate();
-                self.solver.setInput(self.Ghelper_inv.getOutput(),'lbg');
-                self.solver.setInput(0,'ubg');
+                out = self.Ghelper_inv(Ghelper_inv_inputs);
+                solver_inputs.lbg = out{1};
+                solver_inputs.ubg = 0;
             end
 
+            helper_inv_inputs = cell(1,helper_inv.n_in);
             % compose lbx
             for i=1:length(symbols.x)
-              helper_inv.setInput(symbols.x{i}.lb,i-1);
+              helper_inv_inputs{i} = symbols.x{i}.lb;
             end
 
-            helper_inv.evaluate();
-            self.solver.setInput(helper_inv.getOutput(),'lbx');  
+            out = helper_inv(helper_inv_inputs);
+            solver_inputs.lbx = out{1};
 
+            helper_inv_inputs = cell(1,helper_inv.n_in);
             % compose x0
             for i=1:length(symbols.x)
-              helper_inv.setInput(symbols.x{i}.init,i-1);
+              helper_inv_inputs{i} = symbols.x{i}.init
             end
 
-            helper_inv.evaluate();
-            self.solver.setInput(helper_inv.getOutput(),'x0'); 
+            out = helper_inv(helper_inv_inputs);
+            solver_inputs.x0 = out{1};
 
+            helper_inv_inputs = cell(1,helper_inv.n_in);
             % compose ubx
             for i=1:length(symbols.x)
-              helper_inv.setInput(symbols.x{i}.ub,i-1);
+              helper_inv_inputs{i} = symbols.x{i}.ub;
             end
 
-            helper_inv.evaluate();
-            self.solver.setInput(helper_inv.getOutput(),'ubx');    
+            out = helper_inv(helper_inv_inputs);
+            solver_inputs.ubx = out{1};
 
             if isfield(symbols,'p')
+                Phelper_inv_inputs = cell(1,self.Phelper_inv.n_in);
+                
                 % compose p0
                 for i=1:length(symbols.p)
-                  self.Phelper_inv.setInput(symbols.p{i}.value,i-1);
+                  Phelper_inv_inputs{i} = symbols.p{i}.value;
                 end
-
-                self.Phelper_inv.evaluate();
-                self.solver.setInput(self.Phelper_inv.getOutput(),'p');
-
+                out = self.Phelper_inv(Phelper_inv_inputs);
+                solver_inputs.p = out{1};
             end
-   
-            self.solver.evaluate();
-            self.readoutputs(self.solver);
+            out = self.solver(solver_inputs);
+            self.readoutputs(out);
             
          end
             
-         function [] = readoutputs(self,solver)
-            self.helper.setInput(solver.getOutput(0));
-            self.helper.evaluate();
+         function [] = readoutputs(self,solver_out)
+            helper_outputs = self.helper({solver_out.x});
 
             for i=1:length(self.symbols.x)
               v = self.symbols.x{i};
-              v.setValue(full(self.helper.getOutput(i-1)));
+              v.setValue(full( helper_outputs{i}));
             end
 
          end

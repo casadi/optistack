@@ -18,13 +18,13 @@ classdef optivar < OptimizationObject
 
     methods
         function [] = setInit(self,v)
-            self.init.set(v);
+            self.init(:,:) = v;
         end
         function [] = setLb(self,v)
-            self.lb.set(v);
+            self.lb(:,:) = v;
         end
         function [] = setUb(self,v)
-            self.ub.set(v);
+            self.ub(:,:) = v;
         end
         function self = optivar(varargin)
            if isempty(varargin)
@@ -43,9 +43,9 @@ classdef optivar < OptimizationObject
            
            import casadi.*
            self@OptimizationObject(shape,name);
-           self.lb = -inf*DMatrix.ones(self.sparsity());
-           self.ub = inf*DMatrix.ones(self.sparsity());
-           self.init = DMatrix.zeros(self.sparsity());
+           self.lb = -inf*DM.ones(self.sparsity());
+           self.ub = inf*DM.ones(self.sparsity());
+           self.init = DM.zeros(self.sparsity());
         end
     end
     

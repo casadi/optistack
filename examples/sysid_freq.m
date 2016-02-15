@@ -1,6 +1,8 @@
 import casadi.*
 close all
 
+assert(false,'Requires some funcitonality from 2.4 which has not been transferred to 3.0 yet.')
+
 % In this example, we fit a nonlinear model to measurements
 %
 % This example uses more advanced constructs than the vdp* examples:
@@ -40,7 +42,7 @@ params = [M;c;k];
 rhs = [dy; (u-k*y-c*dy)/M];
 
 % Form an ode function
-ode = MXFunction('ode',{states,controls,params},{rhs});
+ode = Function('ode',{states,controls,params},{rhs});
 
 %%%%%%%%%%%% Creating a simulator %%%%%%%%%%
 N_steps_per_sample = 10;
@@ -55,7 +57,7 @@ k4 = ode({states+dt*k3{1},controls,params});
 states_final = states+dt/6.0*(k1{1}+2*k2{1}+2*k3{1}+k4{1});
 
 % Create a function that simulates one step propagation in a sample
-one_step = MXFunction('one_step',{states, controls, params},{states_final});
+one_step = Function('one_step',{states, controls, params},{states_final});
 
 X = states;
 for i=1:N_steps_per_sample
@@ -64,7 +66,7 @@ for i=1:N_steps_per_sample
 end
 
 % Create a function that simulates all step propagation on a sample
-one_sample = MXFunction('one_sample',{states, controls, params}, {X});
+one_sample = Function('one_sample',{states, controls, params}, {X});
 
 % speedup trick: expand into scalar operations
 one_sample = one_sample.expand();
@@ -76,7 +78,7 @@ all_samples = one_sample.mapaccum('all_samples', N);
 % Choose an excitation signal
 u_data = 0.1*rand(N,1);
 
-x0 = DMatrix([0,0]);
+x0 = DM([0,0]);
 all_samples_out = all_samples({x0, u_data, repmat(param_truth,1,N) });
 X_measured = all_samples_out{1};
 
@@ -169,7 +171,7 @@ wsym = MX.sym('w');
 Freal = @(R,I) D + C*solve(R + I*(solve(R,I,'lapacklu')),B,'lapacklu');
 Fimag = @(R,I) -C*solve(I + R*(solve(I,R,'lapacklu')),B,'lapacklu');
 
-Fmag = MXFunction('Fmag',{wsym,params},{Freal(-A,wsym*eye(2)),Fimag(-A,wsym*eye(2))});
+Fmag = Function('Fmag',{wsym,params},{Freal(-A,wsym*eye(2)),Fimag(-A,wsym*eye(2))});
 
 % Derive a function that evaluate Fmag for all frequencies
 Fmag_all = Fmag.map('map',N_w);
