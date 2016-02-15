@@ -246,7 +246,7 @@ classdef optisolve < handle
             helper_inv_inputs = cell(1,helper_inv.n_in);
             % compose x0
             for i=1:length(symbols.x)
-              helper_inv_inputs{i} = symbols.x{i}.init
+              helper_inv_inputs{i} = symbols.x{i}.init;
             end
 
             out = helper_inv(helper_inv_inputs);
