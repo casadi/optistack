@@ -12,6 +12,9 @@ classdef optisolve < handle
             callback1
             callback2
             extra
+            nx
+            ng
+            np
     end
     
     methods
@@ -59,7 +62,10 @@ classdef optisolve < handle
             else
               P = MX.sym('p',0,1);
             end
-
+            
+            self.np = size(P,1);
+            self.nx = size(X,1);
+            
             if ~isempty(gl_pure)
                 g_helpers = {};
                 for i = 1:length(gl_pure)
@@ -77,16 +83,7 @@ classdef optisolve < handle
                 codegen = options.codegen;
                 options = rmfield(options,'codegen');
             end
-            
-            if isfield(options,'callback')
-                mcallback = options.callback;
-                options = rmfield(options,'callback');
-                
-                self.callback1 = MyCallback(self, mcallback);
-                self.callback2 = Callback(self.callback1);
-                options.iteration_callback = self.callback2;
-            end
-            
+
             opt = struct;
             
             gl_pure_v = MX();
@@ -117,6 +114,15 @@ classdef optisolve < handle
                 end
                 
                 options.hess_lag = Hf;
+            end
+            self.ng = size(gl_pure_v,1);
+            
+            if isfield(options,'callback')
+                mcallback = options.callback;
+                options = rmfield(options,'callback');
+                
+                self.callback1 = MyCallback(self, mcallback);
+                options.iteration_callback = self.callback1;
             end
             
             %opt.starcoloring_threshold = 1000;
