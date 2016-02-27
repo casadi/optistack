@@ -20,7 +20,7 @@ function [ varargout ] = optival( varargin )
         f_inputs{1} = 0;
     end
     
-    f_out = f(f_inputs);
+    f_out = f.call(f_inputs);
     varargout = {};
     for i=1:length(varargin)
        varargout = {varargout{:},full(f_out{i})};

@@ -78,15 +78,6 @@ classdef optisolve < handle
                 options = rmfield(options,'codegen');
             end
             
-            if isfield(options,'callback')
-                mcallback = options.callback;
-                options = rmfield(options,'callback');
-                
-                self.callback1 = MyCallback(self, mcallback);
-                self.callback2 = Callback(self.callback1);
-                options.iteration_callback = self.callback2;
-            end
-            
             opt = struct;
             
             gl_pure_v = MX();
@@ -98,7 +89,7 @@ classdef optisolve < handle
                 FF = Function('nlp',{X,P},{F});
 
                 JF = FF.jacobian();
-                J_out = JF({X,P});
+                J_out = JF.call({X,P});
                 J = J_out{1}';
                 H = J*J';
                 lam_f = MX.sym('lam_f');
@@ -117,6 +108,16 @@ classdef optisolve < handle
                 end
                 
                 options.hess_lag = Hf;
+            end
+            self.ng = size(gl_pure_v,1);
+            
+            if isfield(options,'callback')
+                mcallback = options.callback;
+                options = rmfield(options,'callback');
+                
+                self.callback1 = MyCallback(self, mcallback);
+                self.callback2 = Callback(self.callback1);
+                options.iteration_callback = self.callback2;
             end
             
             %opt.starcoloring_threshold = 1000;
@@ -144,7 +145,7 @@ classdef optisolve < handle
                   hess_lag_ins2.adj0_f = hess_lag_ins.lam_f;
                   hess_lag_ins2.adj0_g = hess_lag_ins.lam_g;
                   
-                  out = hess_lag(hess_lag_ins2);
+                  out = hess_lag.call(hess_lag_ins2);
                   hess_lag_ins.hess_gamma_x_x = triu(out.dadj0_x_dder_x);
                   hess_lag = Function('nlp_hess_l',hess_lag_ins,char('x','p','lam_f','lam_g'),char('hess_gamma_x_x'));
                   hess_lag.generate('nlp_hess_l');
@@ -153,13 +154,13 @@ classdef optisolve < handle
                 disp('Codegenerating')
                 nlp.generate('nlp');
                 grad_f_ins = struct('x',X,'p',P);
-                out = grad_f(grad_f_ins);
+                out = grad_f.call(grad_f_ins);
                 grad_f_ins.grad_f_x = out.grad;
                 grad_f_ins.f = out.f;
                 grad_f = Function('nlp_grad_f',grad_f_ins,char('x','p'),char('f','grad_f_x'));
                 grad_f.generate('nlp_grad_f');
                 jac_g_ins = struct('x',X,'p',P);
-                out = jac_g(jac_g_ins);
+                out = jac_g.call(jac_g_ins);
                 jac_g_ins.jac_g_x = out.dg_dx;
                 jac_g_ins.g = out.g;
                 jac_g = Function('nlp_jac_g',jac_g_ins,char('x','p'),char('g','jac_g_x'));
@@ -229,7 +230,7 @@ classdef optisolve < handle
                         Ghelper_inv_inputs{i} = -inf;
                     end
                 end
-                out = self.Ghelper_inv(Ghelper_inv_inputs);
+                out = self.Ghelper_inv.call(Ghelper_inv_inputs);
                 solver_inputs.lbg = out{1};
                 solver_inputs.ubg = 0;
             end
@@ -240,7 +241,7 @@ classdef optisolve < handle
               helper_inv_inputs{i} = symbols.x{i}.lb;
             end
 
-            out = helper_inv(helper_inv_inputs);
+            out = helper_inv.call(helper_inv_inputs);
             solver_inputs.lbx = out{1};
 
             helper_inv_inputs = cell(1,helper_inv.n_in);
@@ -249,7 +250,7 @@ classdef optisolve < handle
               helper_inv_inputs{i} = symbols.x{i}.init;
             end
 
-            out = helper_inv(helper_inv_inputs);
+            out = helper_inv.call(helper_inv_inputs);
             solver_inputs.x0 = out{1};
 
             helper_inv_inputs = cell(1,helper_inv.n_in);
@@ -258,7 +259,7 @@ classdef optisolve < handle
               helper_inv_inputs{i} = symbols.x{i}.ub;
             end
 
-            out = helper_inv(helper_inv_inputs);
+            out = helper_inv.call(helper_inv_inputs);
             solver_inputs.ubx = out{1};
 
             if isfield(symbols,'p')
@@ -268,16 +269,16 @@ classdef optisolve < handle
                 for i=1:length(symbols.p)
                   Phelper_inv_inputs{i} = symbols.p{i}.value;
                 end
-                out = self.Phelper_inv(Phelper_inv_inputs);
+                out = self.Phelper_inv.call(Phelper_inv_inputs);
                 solver_inputs.p = out{1};
             end
-            out = self.solver(solver_inputs);
+            out = self.solver.call(solver_inputs);
             self.readoutputs(out);
             
          end
             
          function [] = readoutputs(self,solver_out)
-            helper_outputs = self.helper({solver_out.x});
+            helper_outputs = self.helper.call({solver_out.x});
 
             for i=1:length(self.symbols.x)
               v = self.symbols.x{i};
