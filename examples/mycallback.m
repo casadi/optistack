@@ -1,4 +1,4 @@
-function [] = callback(fun)
+function [] = mycallback(fun)
   global x
   global y
   plot(optival(x),optival(y),'ro')

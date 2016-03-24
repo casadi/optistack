@@ -16,11 +16,11 @@ function [ gl_pure, gl_equality] = sort_constraints( gl )
     gl_equality = [];
     for g = gl
         g = g{1};
-        if g.isOperation(casadi.OP_LE) || g.isOperation(casadi.OP_LT)
-        	gl_pure = {gl_pure{:},g.getDep(0) - g.getDep(1)};
+        if g.is_op(casadi.OP_LE) || g.is_op(casadi.OP_LT)
+        	gl_pure = {gl_pure{:},g.dep(0) - g.dep(1)};
             gl_equality = [gl_equality, false];
-        elseif g.isOperation(casadi.OP_EQ)
-        	gl_pure = {gl_pure{:},g.getDep(0) - g.getDep(1)};
+        elseif g.is_op(casadi.OP_EQ)
+        	gl_pure = {gl_pure{:},g.dep(0) - g.dep(1)};
             gl_equality = [gl_equality, true];
         else
             error('Constraint type unkown. Use ==, >= or <= .');

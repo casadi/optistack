@@ -1,6 +1,8 @@
 import casadi.*
 close all
 
+assert(false,'Requires some functionality from 2.4 which has not been transferred to 3.0 yet.')
+
 % In this example, we fit a nonlinear model to measurements
 %
 % This example uses more advanced constructs than the vdp* examples:
@@ -40,31 +42,30 @@ params = [M;c;k];
 rhs = [dy; (u-k*y-c*dy)/M];
 
 % Form an ode function
-ode = MXFunction('ode',{states,controls,params},{rhs});
+ode = Function('ode',{states,controls,params},{rhs});
 
 %%%%%%%%%%%% Creating a simulator %%%%%%%%%%
 N_steps_per_sample = 10;
 dt = 1/fs/N_steps_per_sample;
 
 % Build an integrator for this system: Runge Kutta 4 integrator
-k1 = ode({states,controls,params});
-k2 = ode({states+dt/2.0*k1{1},controls,params});
-k3 = ode({states+dt/2.0*k2{1},controls,params});
-k4 = ode({states+dt*k3{1},controls,params});
+k1 = ode(states,controls,params);
+k2 = ode(states+dt/2.0*k1,controls,params);
+k3 = ode(states+dt/2.0*k2,controls,params);
+k4 = ode(states+dt*k3,controls,params);
 
-states_final = states+dt/6.0*(k1{1}+2*k2{1}+2*k3{1}+k4{1});
+states_final = states+dt/6.0*(k1+2*k2+2*k3+k4);
 
 % Create a function that simulates one step propagation in a sample
-one_step = MXFunction('one_step',{states, controls, params},{states_final});
+one_step = Function('one_step',{states, controls, params},{states_final});
 
 X = states;
 for i=1:N_steps_per_sample
-    Xn = one_step({X, controls, params});
-    X = Xn{1};
+    X = one_step(X, controls, params);
 end
 
 % Create a function that simulates all step propagation on a sample
-one_sample = MXFunction('one_sample',{states, controls, params}, {X});
+one_sample = Function('one_sample',{states, controls, params}, {X});
 
 % speedup trick: expand into scalar operations
 one_sample = one_sample.expand();
@@ -76,9 +77,8 @@ all_samples = one_sample.mapaccum('all_samples', N);
 % Choose an excitation signal
 u_data = 0.1*rand(N,1);
 
-x0 = DMatrix([0,0]);
-all_samples_out = all_samples({x0, u_data, repmat(param_truth,1,N) });
-X_measured = all_samples_out{1};
+x0 = DM([0,0]);
+X_measured = all_samples(x0, u_data, repmat(param_truth,1,N));
 
 y_data = X_measured(1,:)';
 
@@ -91,8 +91,7 @@ params_scale = params.*scale;
 
 % Note, it is in general a good idea to scale your decision variables such
 % that they are in the order of ~0.1..100
-all_samples_out = all_samples({x0, u_data, repmat(params_scale,1,N) });
-X_symbolic = all_samples_out{1};
+X_symbolic = all_samples(x0, u_data, repmat(params_scale,1,N));
 
 e_time = y_data-X_symbolic(1,:)';
 
@@ -169,15 +168,15 @@ wsym = MX.sym('w');
 Freal = @(R,I) D + C*solve(R + I*(solve(R,I,'lapacklu')),B,'lapacklu');
 Fimag = @(R,I) -C*solve(I + R*(solve(I,R,'lapacklu')),B,'lapacklu');
 
-Fmag = MXFunction('Fmag',{wsym,params},{Freal(-A,wsym*eye(2)),Fimag(-A,wsym*eye(2))});
+Fmag = Function('Fmag',{wsym,params},{Freal(-A,wsym*eye(2)),Fimag(-A,wsym*eye(2))});
 
 % Derive a function that evaluate Fmag for all frequencies
 Fmag_all = Fmag.map('map',N_w);
 
-out = Fmag_all({w_fit,repmat(params_scale,1,N_w)});
+[Freal, Fimag] = Fmag_all(w_fit,repmat(params_scale,1,N_w));
 
 % The error between modeled frequency response and the truth
-e_freq = [out{1}' - real(f_truth);out{2}' - imag(f_truth)];
+e_freq = [Freal' - real(f_truth);Fimag' - imag(f_truth)];
 
 weight = 8;
 

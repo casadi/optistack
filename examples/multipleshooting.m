@@ -13,7 +13,7 @@ U = optivar(N,1,'U');
 
 % a variable to denote the final time
 tf = optivar(1,1,'tf');
-tf.setInit(1);
+tf.setInit(1); % seconds
 
 % Construct list of all constraints
 g = {};
@@ -23,13 +23,14 @@ for k=1:N
    xk_plus = [S(k+1); P(k+1)];
    
    % shooting constraint
-   xf = rk4(@(x,u) tf*ode(x,u),1/N,xk,U(k));
+   xf = rk4(ode,tf/N,xk,U(k));
    g = {g{:}, xk_plus==xf};
 end
 
 
 % path constraint
 constr = @(P) 1-sin(2*pi*P)/2;
+
 g = {g{:}, S <= constr(P)};
 
 % Initialize with speed 1.
