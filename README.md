@@ -3,32 +3,27 @@
 # optistack
 The goal of this project is to provide a Yalmip-like wrapper around the Matlab interface of [CasADi](http://casadi.org),  resulting in an easy and fast way to solve (parametric) NLPs.
 
-Simple NLP example:
+Example:
 ```matlab
+
+% Decision variables
 x = optivar();
 y = optivar();
 
-nlp = optisolve((1-x)^2+100*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
-
-optival(x)
-optival(y)
-```
-
-Parametric NLP example:
-```matlab
-x = optivar();
-y = optivar();
-
+% Some fixed parameter
 a=optipar();
-a.setValue(50);
+a.setValue(100);
 
 nlp = optisolve((1-x)^2+a*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
 
 optival(x)
 optival(y)
 
+
+% Solve again with a different parameter
 a.setValue(80);
 nlp.resolve();
+
 optival(x)
 optival(y)
 ```
