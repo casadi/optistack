@@ -23,7 +23,7 @@ classdef MyCallback < casadi.Callback
             self.mcallback(solver_struct);
             returncode = {0};
         end
-        function out = get_input_shape(self,i)
+        function out = get_sparsity_in(self,i)
           n = casadi.nlpsol_out(i);
           if strcmp(n,'f')
             out = [1 1];
@@ -36,6 +36,7 @@ classdef MyCallback < casadi.Callback
           else
             out = [0 0];
           end
+          out = casadi.Sparsity.dense(out(1),out(2));
         end
         function out = get_n_in(self)
           out = casadi.nlpsol_n_out();

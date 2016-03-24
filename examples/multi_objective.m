@@ -8,7 +8,7 @@ num1 = optival([x;y]);
 
 e = [x;y];
 
-f = 0.5*inner_prod(e,e);
+f = 0.5*dot(e,e);
 
 nlp = optisolve((1-x)^2+100*(y-x^2)^2+f,{});
 

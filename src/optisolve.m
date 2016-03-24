@@ -102,12 +102,11 @@ classdef optisolve < handle
                 if isempty(scalar_objectives)
                     Hf = Function('nlp_hess_l',struct('x',X,'p',P,'lam_f',lam_f,'hess_gamma_x_x',lam_f*triu(H)),char('x', 'p', 'lam_f', 'lam_g'),char('hess_gamma_x_x'),opt);
                 else
-                    lam_g = MX.sym('lam_g',size(gl_pure_v,1));
-                    S = Function('nlp',nlpIn('x',X,'p',P), nlpOut('f',total_scalar_objective));
+                    S = Function('nlp',struct('x',X,'p',P,'f',total_scalar_objective),char('x','p'),char('f','g'));
                     dS = S.derivative(0,1);
                     Hs = dS.jacobian(0,2,false,true);
-                    Hs_out = Hs({X,P,lam_f,0});
-                    Hf = Function('nlp_hess_l',hessLagIn('x',X,'p',P,'lam_f',lam_f),hessLagOut('hess',lam_f*H+Hs_out{1}),opt);
+                    Hs_out = Hs.call({X,P,lam_f,0});
+                    Hf = Function('nlp_hess_l',struct('x',X,'p',P,'lam_f',lam_f,'hess_gamma_x_x',triu(lam_f*H+Hs_out{1})),char('x', 'p', 'lam_f', 'lam_g'),char('hess_gamma_x_x'),opt);
                 end
                 if isfield(options,'expand') && options.expand
                    Hf = Hf.expand();
