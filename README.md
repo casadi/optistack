@@ -10,12 +10,14 @@ Example:
 x = optivar();
 y = optivar();
 
-% Some fixed parameter
+% Declare some fixed parameter
 a=optipar();
 a.setValue(100);
 
+% Solve
 nlp = optisolve((1-x)^2+a*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
 
+% Retrieve solution
 optival(x)
 optival(y)
 
