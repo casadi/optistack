@@ -8,29 +8,29 @@ Simple NLP example:
 x = optivar();
 y = optivar();
 
-nlp = optisolve((1-x)^2+100*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
+optisolve((1-x)^2+100*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
 
-optival(x)
-optival(y)
+optival(x) % 0.7864
+optival(y) % 0.6177
 ```
 
 Parametric NLP example:
 ```matlab
-x = optivar();
-y = optivar();
+x=optivar(3,1);
 
-a=optipar();
-a.setValue(50);
+% parameter, fixed during optimization
+r=optipar();
 
-nlp = optisolve((1-x)^2+a*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
+r.setValue(1)
+sol = optisolve([1 1 0]*x,{x'*x==r});
 
-optival(x)
-optival(y)
+optival(x) % [-0.7071;-0.7071;0]
 
-a.setValue(80);
-nlp.resolve();
-optival(x)
-optival(y)
+% adapt the value of the parameter
+r.setValue(2)
+sol.resolve();
+
+optival(x) % [-1;-1;0]
 ```
 
 Installation:
