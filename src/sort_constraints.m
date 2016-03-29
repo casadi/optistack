@@ -17,8 +17,16 @@ function [ gl_pure, gl_equality] = sort_constraints( gl )
     for g = gl
         g = g{1};
         if g.is_op(casadi.OP_LE) || g.is_op(casadi.OP_LT)
-        	gl_pure = {gl_pure{:},g.dep(0) - g.dep(1)};
-            gl_equality = [gl_equality, false];
+            args = {};
+            while g.is_op(casadi.OP_LE) || g.is_op(casadi.OP_LT)
+               args = {args{:} g.dep(1)};
+               g = g.dep(0);
+            end
+            args = {args{:} g};
+            for i=1:length(args)-1
+                gl_pure = {gl_pure{:},args{i+1} - args{i}};
+                gl_equality = [gl_equality, false];
+            end
         elseif g.is_op(casadi.OP_EQ)
         	gl_pure = {gl_pure{:},g.dep(0) - g.dep(1)};
             gl_equality = [gl_equality, true];
