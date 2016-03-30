@@ -1,4 +1,9 @@
 function [ varargout ] = optival( varargin )
+    % Evaluate an expression at the optimimum found by OPTISTACK.
+    %
+    % x_opt = optival(x);
+    % e_opt = optival(x'*x);
+    
     import casadi.*
     symbols = OptimizationObject.get_primitives(varargin);
     

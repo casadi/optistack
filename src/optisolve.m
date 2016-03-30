@@ -1,6 +1,20 @@
 classdef optisolve < handle
+    % OPTISOLVE  Solve an OPTISTACK NLP
+    % The optisolve class performs the transcription of 
+    % an expression graph to an NLP, and solves it by Ipopt.
+    %
+    % Example:
+    %  x = optivar();
+    %  y = optivar();
+    %  nlp = optisolve((1-x)^2+100*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
+    %  optival(x)
+    %  optival(y)
+    %
+    % optisolve Methods:
+    %    optisolve - Solve an NLP
+    %    resolve - Solve an NLP again; use together with an updated optipar
     
-    properties
+    properties(Access=private)
             symbols
             Phelper_inv
             helper
@@ -20,8 +34,39 @@ classdef optisolve < handle
     methods
 
         function [ self ] = optisolve( objective, varargin )
+            % OPTISOLVE Solve an OPTISTACK NLP
             %   optisolve(objective)
             %   optisolve(objective,constraints)
+            %   optisolve(objective,constraints,options)
+            %
+            %     objective   - expression graph;
+            %                   constructed from performing mathematical
+            %                   operations on optivar and optipar instances
+            %                   Examples:
+            %                       sin(x)
+            %                       x'*x
+            %                       
+            %     constraints - cell array of expression graphs
+            %                   Examples:
+            %                        {x>=0}
+            %                        {x+y==0,0<=x<=1}
+            %
+            %     options     - struct
+            %                   common options:
+            %                    expand (true|false) trade speed for memory
+            %                    codegen (true|false) compile-and-load code
+            %                    ipopt (struct) pass options on to ipopt
+            %
+            % The solution of the NLP may be obtained using optival:
+            %
+            %  x = optivar();
+            %  y = optivar();
+            %  nlp = optisolve((1-x)^2+100*(y-x^2)^2,{x^2+y^2<=1, x+y>=0});
+            %  optival(x)
+            %  optival(y)
+            %
+            %
+            % See also OPTIVAR, OPTIPAR, OPTIVAL
             if length(varargin)>=1
                 constraints = varargin{1};
             else
@@ -213,11 +258,22 @@ classdef optisolve < handle
             self.resolve();
         end
         
-        function [] = jacspy(self)
-            spy(sparse(DM(self.solver.jacG().output(),1)))
-        end
-        
         function [] = resolve(self)
+            % Solve NLP again; use together with an updated optipar
+            %
+            % Example:
+            % x=optivar(3,1);
+            %
+            % r=optipar();
+            % r.setValue(1)
+            % sol = optisolve([1 1 0]*x,{x'*x==r});
+            % optival(x) % [-0.7071;-0.7071;0]
+            %
+            % r.setValue(2)
+            % sol.resolve();
+            %
+            % optival(x) % [-1;-1;0]
+            
             % recall from class properties
             symbols      = self.symbols;
             helper       = self.helper;
@@ -280,7 +336,8 @@ classdef optisolve < handle
             self.readoutputs(out);
             
          end
-            
+    end
+    methods(Access=private)
          function [] = readoutputs(self,solver_out)
             helper_outputs = self.helper.call({solver_out.x});
 

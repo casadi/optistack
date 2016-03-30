@@ -3,14 +3,14 @@ classdef OptimizationObject < casadi.MX
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties(Constant)
+    properties(Constant, Hidden=true)
         mapping = containers.Map('KeyType','uint64','ValueType','any');
     end
-    properties
+    properties(Hidden=true)
         value = nan;
     end
     
-    methods
+    methods(Hidden=true)
         function n = numArgumentsFromSubscript(self,s,callingContext)
            n=1;
         end
@@ -29,8 +29,6 @@ classdef OptimizationObject < casadi.MX
             self.value = value;
         end
         function r = reshape(self,a,b)
-           a
-           b
            if size(self,1) == a && size(self,2)==b
               r = self;
            else
@@ -38,7 +36,7 @@ classdef OptimizationObject < casadi.MX
            end
         end
     end
-    methods(Static)
+    methods(Static, Hidden=true)
         function [ syms ] = get_primitives( el, varargin )
             % Out of a list of expression, retrieves all primitive expressions
             % The result is sorted into a dictionary with the key originating
