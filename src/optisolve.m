@@ -14,11 +14,10 @@ classdef optisolve < handle
     %    optisolve - Solve an NLP
     %    resolve - Solve an NLP again; use together with an updated optipar
     
-    properties(Access=private)
+    properties(Access=?MyCallback)
             symbols
             Phelper_inv
             helper
-            solver
             Ghelper_inv
             Ghelper
             helper_inv
@@ -26,9 +25,13 @@ classdef optisolve < handle
             callback1
             callback2
             extra
-            nx
-            ng
-            np
+    end
+    
+    properties(SetAccess=private)
+            solver % CasADi solver object
+            nx % Number of decision variable
+            ng % Number of constraints
+            np % Number of parameters
     end
     
     methods
@@ -337,7 +340,7 @@ classdef optisolve < handle
             
          end
     end
-    methods(Access=private)
+    methods(Access=?MyCallback)
          function [] = readoutputs(self,solver_out)
             helper_outputs = self.helper.call({solver_out.x});
 
