@@ -219,16 +219,16 @@ classdef optisolve < handle
                 jac_g.generate('nlp_jac_g');
                 hess_lag.generate('nlp_hess_l');
                 
-                jit_options = struct('flags',char('-O3',''));%,'plugin_libs',char('linearsolver_lapacklu',''));
-
+                jit_options = struct('compiler', 'clang', 'flags', char('-O3',''));%,'plugin_libs',char('linearsolver_lapacklu',''));
+                
                 disp('Compiling')
-                nlp_compiler = Compiler('nlp.c','clang',jit_options);
+                nlp_compiler = Compiler('nlp.c','shell',jit_options);
                 nlp = external('nlp',nlp_compiler,struct);
-                grad_f_compiler = Compiler('nlp_grad_f.c','clang',jit_options);
+                grad_f_compiler = Compiler('nlp_grad_f.c','shell',jit_options);
                 grad_f = external('nlp_grad_f',grad_f_compiler,struct);
-                jac_g_compiler = Compiler('nlp_jac_g.c','clang',jit_options);
+                jac_g_compiler = Compiler('nlp_jac_g.c','shell',jit_options);
                 jac_g = external('nlp_jac_g',jac_g_compiler,struct);
-                hess_lag_compiler = Compiler('nlp_hess_l.c','clang',jit_options);
+                hess_lag_compiler = Compiler('nlp_hess_l.c','shell',jit_options);
                 hess_lag = external('nlp_hess_l',hess_lag_compiler,struct);
                 
                 extra = struct;
