@@ -173,8 +173,7 @@ classdef optisolve < handle
             end
             
             %opt.starcoloring_threshold = 1000;
-            opt.monitor = char('eval_hess','eval_f','eval_grad_f','eval_jac_g');
-            
+
             nlp = Function('nlp',struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v),char('x','p'),char('f','g'),opt);
 
             if isfield(options,'expand') && options.expand
