@@ -38,8 +38,8 @@ Installation:
 
 Windows   |   Linux     |    Mac
 ----------|-------------|--------------
-[R2014a](http://files.casadi.org/3.0.0/windows/casadi-matlabR2014a-v3.0.0.zip) or later |    [R2014a](http://files.casadi.org/3.0.0/linux/casadi-matlabR2014a-v3.0.0.tar.gz) or later      | [R2015a](http://files.casadi.org/3.0.0/osx/casadi-matlabR2015a-v3.0.0.tar.gz) or later
-[R2013a](http://files.casadi.org/3.0.0/windows/casadi-matlabR2013a-v3.0.0.zip) or later | | [R2014a](http://files.casadi.org/3.0.0/osx/casadi-matlabR2014a-v3.0.0.tar.gz) or later |
+[R2014a](http://files.casadi.org/3.1.0-rc1/windows/casadi-matlabR2014a-v3.1.0-rc1.zip) or later |    [R2014a](http://files.casadi.org/3.1.0-rc1/linux/casadi-matlabR2014a-v3.1.0-rc1.tar.gz) or later      | [R2015a](http://files.casadi.org/3.1.0-rc1/osx/casadi-matlabR2015a-v3.1.0-rc1.tar.gz) or later
+[R2013a](http://files.casadi.org/3.1.0-rc1/windows/casadi-matlabR2013a-v3.1.0-rc1.zip) or later | | [R2014a](http://files.casadi.org/3.1.0-rc1/osx/casadi-matlabR2014a-v3.1.0-rc1.tar.gz) or later |
 
  * Add the unzipped directory to the Matlab path (`addpath('casadi_unzippeddir')`)
  * Obtain [Optistack](https://github.com/casadi/optistack/archive/master.zip) and unzip it.
@@ -58,7 +58,7 @@ Obtain numeric results    | `value(x)`                  | `optival(x)`
 
 
 More functionality:
-`optivar` inherits from `casadi.MX` class. This means [all the usual operations](http://casadi.sourceforge.net/v3.0.0/api/html/d9/dc2/group__expression__tools.html) for `MX` are possible.
+`optivar` inherits from `casadi.MX` class. This means [all the usual operations](http://casadi.sourceforge.net/v3.1.0-rc1/api/html/d9/dc2/group__expression__tools.html) for `MX` are possible.
 
 
 

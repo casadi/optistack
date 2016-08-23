@@ -130,6 +130,7 @@ classdef optisolve < handle
             if isfield(options,'codegen')
                 codegen = options.codegen;
                 options = rmfield(options,'codegen');
+                options.jit = true;
             end
             
             opt = struct;
@@ -174,80 +175,7 @@ classdef optisolve < handle
             
             %opt.starcoloring_threshold = 1000;
 
-            nlp = Function('nlp',struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v),char('x','p'),char('f','g'),opt);
-
-            if isfield(options,'expand') && options.expand
-               nlp = nlp.expand();
-               options = rmfield(options,'expand');
-            end
-
-            if codegen
-                disp('Computing derivatives')
-                grad_f = nlp.gradient();
-                jac_g = nlp.jacobian(0,1);
-                if isfield(options,'hess_lag')
-                  hess_lag = options.hess_lag;
-                else
-                  grad_lag = nlp.derivative(0,1);
-                  hess_lag = grad_lag.jacobian(0,2,false,true);
-                  
-                  hess_lag_ins = struct('x',X,'p',P,'lam_f',MX.sym('lam_f',hess_lag.sparsity_in(2)),'lam_g',MX.sym('lam_g',hess_lag.sparsity_in(3)));
-                  hess_lag_ins2 = struct('der_x',X,'der_p',P);
-                  hess_lag_ins2.adj0_f = hess_lag_ins.lam_f;
-                  hess_lag_ins2.adj0_g = hess_lag_ins.lam_g;
-                  
-                  out = hess_lag.call(hess_lag_ins2);
-                  hess_lag_ins.hess_gamma_x_x = triu(out.dadj0_x_dder_x);
-                  hess_lag = Function('nlp_hess_l',hess_lag_ins,char('x','p','lam_f','lam_g'),char('hess_gamma_x_x'));
-                  hess_lag.generate('nlp_hess_l');
-
-                end
-                disp('Codegenerating')
-                nlp.generate('nlp');
-                grad_f_ins = struct('x',X,'p',P);
-                out = grad_f.call(grad_f_ins);
-                grad_f_ins.grad_f_x = out.grad;
-                grad_f_ins.f = out.f;
-                grad_f = Function('nlp_grad_f',grad_f_ins,char('x','p'),char('f','grad_f_x'));
-                grad_f.generate('nlp_grad_f');
-                jac_g_ins = struct('x',X,'p',P);
-                out = jac_g.call(jac_g_ins);
-                jac_g_ins.jac_g_x = out.dg_dx;
-                jac_g_ins.g = out.g;
-                jac_g = Function('nlp_jac_g',jac_g_ins,char('x','p'),char('g','jac_g_x'));
-                jac_g.generate('nlp_jac_g');
-                hess_lag.generate('nlp_hess_l');
-                
-                jit_options = struct('flags',char('-O3',''));%,'plugin_libs',char('linearsolver_lapacklu',''));
-
-                disp('Compiling')
-                nlp_compiler = Compiler('nlp.c','clang',jit_options);
-                nlp = external('nlp',nlp_compiler,struct);
-                grad_f_compiler = Compiler('nlp_grad_f.c','clang',jit_options);
-                grad_f = external('nlp_grad_f',grad_f_compiler,struct);
-                jac_g_compiler = Compiler('nlp_jac_g.c','clang',jit_options);
-                jac_g = external('nlp_jac_g',jac_g_compiler,struct);
-                hess_lag_compiler = Compiler('nlp_hess_l.c','clang',jit_options);
-                hess_lag = external('nlp_hess_l',hess_lag_compiler,struct);
-                
-                extra = struct;
-                extra.nlp = nlp;
-                extra.nlp_compiler = nlp_compiler;
-                extra.grad_f = grad_f;
-                extra.grad_f_compiler = grad_f_compiler;
-                extra.jac_g = jac_g;
-                extra.jac_g_compiler = jac_g_compiler;
-                extra.hess_lag = hess_lag;
-                extra.hess_lag_compiler = hess_lag_compiler;
-                
-                self.extra = extra;
-                
-                options.grad_f = grad_f;
-                options.jac_g = jac_g;
-                options.hess_lag = hess_lag;
-             
-            end
-
+            nlp = struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v);
 
             self.solver = nlpsol('solver','ipopt', nlp, options);
 
