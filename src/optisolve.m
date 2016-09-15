@@ -60,6 +60,9 @@ classdef optisolve < handle
             %                    codegen (true|false) compile-and-load code
             %                    ipopt (struct) pass options on to ipopt
             %
+            %     solver      - string
+            %                   the solver name, default: ipopt
+            %
             % The solution of the NLP may be obtained using optival:
             %
             %  x = optivar();
@@ -70,14 +73,19 @@ classdef optisolve < handle
             %
             %
             % See also OPTIVAR, OPTIPAR, OPTIVAL
-            if length(varargin)>=1
+            if length(varargin) >= 1
                 constraints = varargin{1};
             else
                 constraints = {};
             end
             options = struct;
-            if length(varargin)>=2
+            if length(varargin) >= 2
                 options = varargin{2};
+            end
+            solver = 'ipopt';
+            if length(varargin) >= 3
+                assert(ischar(varargin{3}), 'Solver name must be a string.');
+                solver = varargin{3};
             end
 
             import casadi.*
@@ -173,14 +181,15 @@ classdef optisolve < handle
             end
             
             %opt.starcoloring_threshold = 1000;
-            opt.monitor = char('eval_hess','eval_f','eval_grad_f','eval_jac_g');
+            %opt.monitor = char('eval_hess','eval_f','eval_grad_f','eval_jac_g');
             
-            nlp = Function('nlp',struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v),char('x','p'),char('f','g'),opt);
-
-            if isfield(options,'expand') && options.expand
-               nlp = nlp.expand();
-               options = rmfield(options,'expand');
-            end
+            %nlp = Function('nlp',struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v),char('x','p'),char('f','g'),opt);
+            nlp = struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v);
+            
+%             if isfield(options,'expand') && options.expand
+%                 nlp = nlp.expand();
+%                 options = rmfield(options,'expand');
+%             end
 
             if codegen
                 disp('Computing derivatives')
@@ -250,7 +259,7 @@ classdef optisolve < handle
             end
 
 
-            self.solver = nlpsol('solver','ipopt', nlp, options);
+            self.solver = nlpsol('solver',solver, nlp, options);
 
             % Save to class properties
             self.symbols      = symbols;
