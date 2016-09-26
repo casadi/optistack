@@ -5,21 +5,30 @@ function [ varargout ] = optival( varargin )
     % e_opt = optival(x'*x);
     
     import casadi.*
-    symbols = OptimizationObject.get_primitives(varargin);
+    symbols_struct = OptimizationObject.get_primitives(varargin);
     
+    symbols = {};
     hassymbols = false;
-    symbolsx = {MX.sym('dummy')}; % bug in casadi typemaps: {} does not work
-    if isfield(symbols,'x')
-       symbolsx = symbols.x;
+    if isfield(symbols_struct,'x')
+       symbols = symbols_struct.x;
        hassymbols = true;
     end
+    if isfield(symbols_struct,'p')
+       symbols = [symbols symbols_struct.p];
+       hassymbols = true;
+    end
+
+    if ~hassymbols
+       symbols = {MX.sym('dummy')}; % bug in casadi typemaps: {} does not work
+    end
+
     
-    f = Function('f',symbolsx,varargin);
+    f = Function('f',symbols,varargin);
     
     f_inputs = cell(1,f.n_in);
     if hassymbols
-        for i=1:length(symbolsx)
-           f_inputs{i} = optival(symbolsx{i}); 
+        for i=1:length(symbols)
+           f_inputs{i} = optival(symbols{i}); 
         end
     else
         f_inputs{1} = 0;
