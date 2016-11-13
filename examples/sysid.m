@@ -68,7 +68,7 @@ one_sample = one_sample.expand();
 
 %%%%%%%%%%%% Simulating the system %%%%%%%%%%
 
-assert(N%100==0);
+assert(mod(N,100)==0);
 all_samples1 = one_sample.mapaccum('all_samples', N/100);
 all_samples = all_samples1.mapaccum('all_samples', N);
 
