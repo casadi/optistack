@@ -70,7 +70,7 @@ one_sample = one_sample.expand();
 
 assert(mod(N,100)==0);
 all_samples1 = one_sample.mapaccum('all_samples', N/100);
-all_samples = all_samples1.mapaccum('all_samples', N);
+all_samples = all_samples1.mapaccum('all_samples', 100);
 
 % Choose an excitation signal
 u_data = 0.1*rand(N,1);
