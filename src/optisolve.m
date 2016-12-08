@@ -1,6 +1,6 @@
 classdef optisolve < handle
     % OPTISOLVE  Solve an OPTISTACK NLP
-    % The optisolve class performs the transcription of 
+    % The optisolve class performs the transcription of
     % an expression graph to an NLP, and solves it by Ipopt.
     %
     % Example:
@@ -13,7 +13,7 @@ classdef optisolve < handle
     % optisolve Methods:
     %    optisolve - Solve an NLP
     %    resolve - Solve an NLP again; use together with an updated optipar
-    
+
     properties(Access=?MyCallback)
             symbols
             Phelper_inv
@@ -26,14 +26,14 @@ classdef optisolve < handle
             callback2
             extra
     end
-    
+
     properties(SetAccess=private)
             solver % CasADi solver object
             nx % Number of decision variable
             ng % Number of constraints
             np % Number of parameters
     end
-    
+
     methods
 
         function [ self ] = optisolve( objective, varargin )
@@ -48,7 +48,7 @@ classdef optisolve < handle
             %                   Examples:
             %                       sin(x)
             %                       x'*x
-            %                       
+            %
             %     constraints - cell array of expression graphs
             %                   Examples:
             %                        {x>=0}
@@ -96,13 +96,13 @@ classdef optisolve < handle
             if length(constraints)~=size(constraints,2)
                 constraints = constraints';
             end
-            
+
 
             [ gl_pure, gl_equality] = sort_constraints( constraints );
             [ scalar_objectives, twonorm_objectives, total_scalar_objective, total_objective ] = sort_objectives( objective );
-            
+
             symbols = OptimizationObject.get_primitives({total_objective gl_pure{:}});
-            
+
             % helper functions for 'x'
             X = veccat(symbols.x{:});
             helper = Function('helper',{X},symbols.x);
@@ -114,18 +114,18 @@ classdef optisolve < handle
               P = veccat(symbols.p{:});
 
               self.Phelper_inv = Function('Phelper_inv',symbols.p,{P});
-              
+
             else
               P = MX.sym('p',0,1);
             end
-            
+
             self.np = size(P,1);
             self.nx = size(X,1);
-            
+
             if ~isempty(gl_pure)
                 g_helpers = {};
                 for i = 1:length(gl_pure)
-                   g_helpers = {g_helpers{:},MX.sym('g',gl_pure{i}.sparsity()) }; 
+                   g_helpers = {g_helpers{:},MX.sym('g',gl_pure{i}.sparsity()) };
                 end
                 G_helpers = veccat(g_helpers{:});
 
@@ -133,15 +133,16 @@ classdef optisolve < handle
 
                 self.Ghelper_inv = Function('Ghelper_inv',g_helpers,{G_helpers});
             end
-            
+
             codegen = false;
             if isfield(options,'codegen')
                 codegen = options.codegen;
                 options = rmfield(options,'codegen');
+                options.jit = true;
             end
-            
+
             opt = struct;
-            
+
             gl_pure_v = MX();
             if ~isempty(gl_pure)
                gl_pure_v = veccat(gl_pure{:});
@@ -167,97 +168,22 @@ classdef optisolve < handle
                 if isfield(options,'expand') && options.expand
                    Hf = Hf.expand();
                 end
-                
+
                 options.hess_lag = Hf;
             end
             self.ng = size(gl_pure_v,1);
-            
+
             if isfield(options,'callback')
                 mcallback = options.callback;
                 options = rmfield(options,'callback');
-                
+
                 self.callback1 = MyCallback(self, mcallback);
                 options.iteration_callback = self.callback1;
             end
-            
+
             %opt.starcoloring_threshold = 1000;
-            %opt.monitor = char('eval_hess','eval_f','eval_grad_f','eval_jac_g');
-            
-            %nlp = Function('nlp',struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v),char('x','p'),char('f','g'),opt);
+
             nlp = struct('x',X,'p',P,'f',total_objective,'g',gl_pure_v);
-            
-%             if isfield(options,'expand') && options.expand
-%                 nlp = nlp.expand();
-%                 options = rmfield(options,'expand');
-%             end
-
-            if codegen
-                disp('Computing derivatives')
-                grad_f = nlp.gradient();
-                jac_g = nlp.jacobian(0,1);
-                if isfield(options,'hess_lag')
-                  hess_lag = options.hess_lag;
-                else
-                  grad_lag = nlp.derivative(0,1);
-                  hess_lag = grad_lag.jacobian(0,2,false,true);
-                  
-                  hess_lag_ins = struct('x',X,'p',P,'lam_f',MX.sym('lam_f',hess_lag.sparsity_in(2)),'lam_g',MX.sym('lam_g',hess_lag.sparsity_in(3)));
-                  hess_lag_ins2 = struct('der_x',X,'der_p',P);
-                  hess_lag_ins2.adj0_f = hess_lag_ins.lam_f;
-                  hess_lag_ins2.adj0_g = hess_lag_ins.lam_g;
-                  
-                  out = hess_lag.call(hess_lag_ins2);
-                  hess_lag_ins.hess_gamma_x_x = triu(out.dadj0_x_dder_x);
-                  hess_lag = Function('nlp_hess_l',hess_lag_ins,char('x','p','lam_f','lam_g'),char('hess_gamma_x_x'));
-                  hess_lag.generate('nlp_hess_l');
-
-                end
-                disp('Codegenerating')
-                nlp.generate('nlp');
-                grad_f_ins = struct('x',X,'p',P);
-                out = grad_f.call(grad_f_ins);
-                grad_f_ins.grad_f_x = out.grad;
-                grad_f_ins.f = out.f;
-                grad_f = Function('nlp_grad_f',grad_f_ins,char('x','p'),char('f','grad_f_x'));
-                grad_f.generate('nlp_grad_f');
-                jac_g_ins = struct('x',X,'p',P);
-                out = jac_g.call(jac_g_ins);
-                jac_g_ins.jac_g_x = out.dg_dx;
-                jac_g_ins.g = out.g;
-                jac_g = Function('nlp_jac_g',jac_g_ins,char('x','p'),char('g','jac_g_x'));
-                jac_g.generate('nlp_jac_g');
-                hess_lag.generate('nlp_hess_l');
-                
-                jit_options = struct('compiler', 'clang', 'flags', char('-O3',''));%,'plugin_libs',char('linearsolver_lapacklu',''));
-                
-                disp('Compiling')
-                nlp_compiler = Compiler('nlp.c','shell',jit_options);
-                nlp = external('nlp',nlp_compiler,struct);
-                grad_f_compiler = Compiler('nlp_grad_f.c','shell',jit_options);
-                grad_f = external('nlp_grad_f',grad_f_compiler,struct);
-                jac_g_compiler = Compiler('nlp_jac_g.c','shell',jit_options);
-                jac_g = external('nlp_jac_g',jac_g_compiler,struct);
-                hess_lag_compiler = Compiler('nlp_hess_l.c','shell',jit_options);
-                hess_lag = external('nlp_hess_l',hess_lag_compiler,struct);
-                
-                extra = struct;
-                extra.nlp = nlp;
-                extra.nlp_compiler = nlp_compiler;
-                extra.grad_f = grad_f;
-                extra.grad_f_compiler = grad_f_compiler;
-                extra.jac_g = jac_g;
-                extra.jac_g_compiler = jac_g_compiler;
-                extra.hess_lag = hess_lag;
-                extra.hess_lag_compiler = hess_lag_compiler;
-                
-                self.extra = extra;
-                
-                options.grad_f = grad_f;
-                options.jac_g = jac_g;
-                options.hess_lag = hess_lag;
-             
-            end
-
 
             self.solver = nlpsol('solver',solver, nlp, options);
 
@@ -266,10 +192,10 @@ classdef optisolve < handle
             self.helper       = helper;
             self.helper_inv   = helper_inv;
             self.gl_equality  = gl_equality;
-            
+
             self.resolve();
         end
-        
+
         function [] = resolve(self)
             % Solve NLP again; use together with an updated optipar
             %
@@ -285,7 +211,7 @@ classdef optisolve < handle
             % sol.resolve();
             %
             % optival(x) % [-1;-1;0]
-            
+
             % recall from class properties
             symbols      = self.symbols;
             helper       = self.helper;
@@ -336,7 +262,7 @@ classdef optisolve < handle
 
             if isfield(symbols,'p')
                 Phelper_inv_inputs = cell(1,self.Phelper_inv.n_in);
-                
+
                 % compose p0
                 for i=1:length(symbols.p)
                   Phelper_inv_inputs{i} = symbols.p{i}.value;
@@ -346,7 +272,7 @@ classdef optisolve < handle
             end
             out = self.solver.call(solver_inputs);
             self.readoutputs(out);
-            
+
          end
     end
     methods(Access=?MyCallback)
@@ -361,5 +287,5 @@ classdef optisolve < handle
          end
 
     end
-    
+
 end
