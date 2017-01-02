@@ -1,7 +1,7 @@
 import casadi.*
 close all
 
-assert(false,'Requires some functionality from 2.4 which has not been transferred to 3.0 yet.')
+disp('Example is not fully functional yet. Codegeneration not supported')
 
 % In this example, we fit a nonlinear model to measurements
 %
@@ -72,7 +72,9 @@ one_sample = one_sample.expand();
 
 %%%%%%%%%%%% Simulating the system %%%%%%%%%%
 
-all_samples = one_sample.mapaccum('all_samples', N);
+assert(mod(N,100)==0);
+all_samples1 = one_sample.mapaccum('all_samples', N/100);
+all_samples = all_samples1.mapaccum('all_samples', 100);
 
 % Choose an excitation signal
 u_data = 0.1*rand(N,1);
@@ -100,7 +102,7 @@ c.setInit(param_guess(2));
 k.setInit(param_guess(3));
 
 options = struct;
-options.codegen = true;
+options.codegen = false;
 
 disp('Single shooting without frequency information ...')
 
@@ -171,7 +173,7 @@ Fimag = @(R,I) -C*solve(I + R*(solve(I,R,'lapacklu')),B,'lapacklu');
 Fmag = Function('Fmag',{wsym,params},{Freal(-A,wsym*eye(2)),Fimag(-A,wsym*eye(2))});
 
 % Derive a function that evaluate Fmag for all frequencies
-Fmag_all = Fmag.map('map',N_w);
+Fmag_all = Fmag.map(N_w);
 
 [Freal, Fimag] = Fmag_all(w_fit,repmat(params_scale,1,N_w));
 
@@ -184,8 +186,10 @@ e_total = [e_time;weight*e_freq];
 
 options = struct;
 % Note: codegen of linear solvers is missing in casadi still; that makes this slow
-options.codegen = true;
-options.tol = 1e-5;
+options.codegen = false;
+options.ipopt.tol = 1e-5;
+
+options
 
 optisolve(e_total,{},options);
 

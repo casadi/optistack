@@ -130,7 +130,7 @@ classdef optisolve < handle
             if isfield(options,'codegen')
                 codegen = options.codegen;
                 options = rmfield(options,'codegen');
-                options.jit = true;
+                options.jit = codegen;
             end
             
             opt = struct;
