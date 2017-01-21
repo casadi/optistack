@@ -133,6 +133,16 @@ classdef optisolve < handle
                 options.jit = codegen;
             end
             
+            quiet = false;
+            if isfield(options,'quiet')
+                quiet = options.quiet;
+                options = rmfield(options,'quiet');
+       		if quiet
+	             options.print_time = false;
+		     options.ipopt.print_level = 0;
+		end
+            end
+            
             opt = struct;
             
             gl_pure_v = MX();
