@@ -138,7 +138,17 @@ classdef optisolve < handle
             if isfield(options,'codegen')
                 codegen = options.codegen;
                 options = rmfield(options,'codegen');
-                options.jit = true;
+                options.jit = codegen;
+            end
+            
+            quiet = false;
+            if isfield(options,'quiet')
+                quiet = options.quiet;
+                options = rmfield(options,'quiet');
+       		if quiet
+	             options.print_time = false;
+		     options.ipopt.print_level = 0;
+		end
             end
 
             opt = struct;
