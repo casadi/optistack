@@ -5,6 +5,7 @@ classdef optivar < OptimizationObject
     %  x = optivar(n)                  Column vector of length n
     %  x = optivar(n,m)                Matrix of shape n-by-m
     %  x = optivar(n,m,name)           Supply a name for printing
+    %  x = optivar(MX mx)              Wrap an existing MX object
     %
     %  optivar Methods:
     %    optivar  - constructor
