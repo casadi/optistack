@@ -48,6 +48,8 @@ classdef optisolve < handle
         m_fmincon_opt   % Options for fmincon()
         
         m_fmincon = false;  % If fmincon is used
+        
+        fmincon_flag = NaN; % exit flag of fmincon, after it has solved the problem
     end
 
     methods
@@ -469,7 +471,7 @@ classdef optisolve < handle
             
             % Call fmincon()
             solver_outputs = struct();
-            [solver_outputs.x] = fmincon(@self.fmincon_objfun, solver_inputs.x0,...
+            [solver_outputs.x, ~, self.fmincon_flag] = fmincon(@self.fmincon_objfun, solver_inputs.x0,...
                 [], [], [], [], ...
                 solver_inputs.lbx, solver_inputs.ubx, ...
                 @self.fmincon_nonlcon, ...
