@@ -36,10 +36,10 @@ optival(x) % [-1;-1;0]
 Installation:
  * Obtain CasADi for your version of Matlab:
 
-Windows   |   Linux     |    Mac
+| Windows   |   Linux     |    Mac
 ----------|-------------|--------------
-[R2014a](http://files.casadi.org/3.1.0-rc1/windows/casadi-matlabR2014a-v3.1.0-rc1.zip) or later |    [R2014a](http://files.casadi.org/3.1.0-rc1/linux/casadi-matlabR2014a-v3.1.0-rc1.tar.gz) or later      | [R2015a](http://files.casadi.org/3.1.0-rc1/osx/casadi-matlabR2015a-v3.1.0-rc1.tar.gz) or later
-[R2013a](http://files.casadi.org/3.1.0-rc1/windows/casadi-matlabR2013a-v3.1.0-rc1.zip) or later | | [R2014a](http://files.casadi.org/3.1.0-rc1/osx/casadi-matlabR2014a-v3.1.0-rc1.tar.gz) or later |
+| [R2014a](http://files.casadi.org/3.1.0-rc1/windows/casadi-matlabR2014a-v3.1.0-rc1.zip) or later |    [R2014a](http://files.casadi.org/3.1.0-rc1/linux/casadi-matlabR2014a-v3.1.0-rc1.tar.gz) or later      | [R2015a](http://files.casadi.org/3.1.0-rc1/osx/casadi-matlabR2015a-v3.1.0-rc1.tar.gz) or later
+| [R2013a](http://files.casadi.org/3.1.0-rc1/windows/casadi-matlabR2013a-v3.1.0-rc1.zip) or later | | [R2014a](http://files.casadi.org/3.1.0-rc1/osx/casadi-matlabR2014a-v3.1.0-rc1.tar.gz) or later |
 
  * Add the unzipped directory to the Matlab path (`addpath('casadi_unzippeddir')`)
  * Obtain [Optistack](https://github.com/casadi/optistack/archive/master.zip) and unzip it.
@@ -49,12 +49,12 @@ Windows   |   Linux     |    Mac
 
 Cheat sheet:
 
-                          |  Yalmip                     | Optistack
-------------------------- | --------------------------- | -----------------------------
-Declare decision variable | `x = sdpvar(nrows,ncols)`   | `x = optivar(nrows,ncols)`
-Set initial values        | `assign(x,x0)`              | `x.setInit(x0)`
-Solve a problem           | `optimize([g(x)==0],f)`     | `optisolve(f,{g(x)==0})`
-Obtain numeric results    | `value(x)`                  | `optival(x)`
+|                          |  Yalmip                     | Optistack
+-------------------------- | --------------------------- | -----------------------------
+| Declare decision variable | `x = sdpvar(nrows,ncols)`   | `x = optivar(nrows,ncols)`
+| Set initial values        | `assign(x,x0)`              | `x.setInit(x0)`
+| Solve a problem           | `optimize([g(x)==0],f)`     | `optisolve(f,{g(x)==0})`
+| Obtain numeric results    | `value(x)`                  | `optival(x)`
 
 
 More functionality:
