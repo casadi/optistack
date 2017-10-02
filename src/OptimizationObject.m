@@ -15,12 +15,24 @@ classdef OptimizationObject < casadi.MX
            n=1;
         end
         function self = OptimizationObject(shape,name)
-           if isscalar(shape)
-               shape = [shape 1];
-           end
-           self@casadi.MX(casadi.MX.sym(name,casadi.Sparsity.dense(shape(1),shape(2))));
-           mymapping = OptimizationObject.mapping;
-           mymapping(self.hash()) = self;
+            % Create an MX symbolic object either by shape & name, or by
+            % wrapping an existing MX object.
+            create_new_object = true;
+            if isa(shape, 'casadi.MX')
+                assert(shape.is_symbolic(), 'Only an MX symbolic object can be wrapped.');
+                the_object = shape;
+                create_new_object = false;
+            else
+                if isscalar(shape)
+                    shape = [shape 1];
+                end
+            end
+            if create_new_object
+                the_object = casadi.MX.sym(name,casadi.Sparsity.dense(shape(1),shape(2)));
+            end
+            self@casadi.MX(the_object);
+            mymapping = OptimizationObject.mapping;
+            mymapping(self.hash()) = self;
         end
         function val = optival(self)
             val = self.value;

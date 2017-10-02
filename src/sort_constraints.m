@@ -13,22 +13,22 @@ function [ gl_pure, gl_equality] = sort_constraints( gl )
     % For each entry in `gl_pure`, this list contains a boolean.
 
     gl_pure = {};
-    gl_equality = [];
+    gl_equality = false(1,0);
     for g = gl
-        g = g{1};
-        if g.is_op(casadi.OP_LE) || g.is_op(casadi.OP_LT)
+        h = g{1};
+        if h.is_op(casadi.OP_LE) || h.is_op(casadi.OP_LT)
             args = {};
-            while g.is_op(casadi.OP_LE) || g.is_op(casadi.OP_LT)
-               args = {args{:} g.dep(1)};
-               g = g.dep(0);
+            while h.is_op(casadi.OP_LE) || h.is_op(casadi.OP_LT)
+               args = [args {h.dep(1)}]; %#ok<*AGROW>
+               h = h.dep(0);
             end
-            args = {args{:} g};
+            args = [args {h}];
             for i=1:length(args)-1
-                gl_pure = {gl_pure{:},args{i+1} - args{i}};
+                gl_pure = [gl_pure, {args{i+1} - args{i}}];
                 gl_equality = [gl_equality, false];
             end
-        elseif g.is_op(casadi.OP_EQ)
-        	gl_pure = {gl_pure{:},g.dep(0) - g.dep(1)};
+        elseif h.is_op(casadi.OP_EQ)
+        	gl_pure = [gl_pure, {h.dep(0) - h.dep(1)}];
             gl_equality = [gl_equality, true];
         else
             error('Constraint type unkown. Use ==, >= or <= .');

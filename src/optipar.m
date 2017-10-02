@@ -29,21 +29,27 @@ classdef optipar < OptimizationObject
             %  x = optipar(n)                  Column vector of length n
             %  x = optipar(n,m)                Matrix of shape n-by-m
             %  x = optipar(n,m,name)           A name for printing the variable
-           if isempty(varargin)
+            %  x = optipar(obj)                Wrap an existing MX object
+           if nargin == 0
                shape = 1;
-           elseif length(varargin)==1
+           elseif nargin == 1
                shape = varargin{1};
-           elseif length(varargin)>1
+           elseif nargin > 1
                shape = [varargin{1};varargin{2}];
            end
            
-           if length(varargin)==3
-               name = varargin{3};
+           if nargin == 3
+               name = varargin(3);
            else
-               name = 'p';
+               if isnumeric(shape)
+                   name = {'p'};  % automatic name
+               else
+                   name = {};   % wrapping an object
+               end
            end
            
-           self@OptimizationObject(shape,name);
+           % name is a cell, could be empty
+           self@OptimizationObject(shape,name{:});
         end
     end
     

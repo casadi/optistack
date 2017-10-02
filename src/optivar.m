@@ -5,6 +5,7 @@ classdef optivar < OptimizationObject
     %  x = optivar(n)                  Column vector of length n
     %  x = optivar(n,m)                Matrix of shape n-by-m
     %  x = optivar(n,m,name)           Supply a name for printing
+    %  x = optivar(MX mx)              Wrap an existing MX object
     %
     %  optivar Methods:
     %    optivar  - constructor
@@ -50,22 +51,27 @@ classdef optivar < OptimizationObject
             %  x = optivar(n)                  Column vector of length n
             %  x = optivar(n,m)                Matrix of shape n-by-m
             %  x = optivar(n,m,name)           Supply a name for printing
-           if isempty(varargin)
+            %  x = optivar(obj)                Wrap an existing MX object
+           if nargin == 0
                shape = 1;
-           elseif length(varargin)==1
+           elseif nargin == 1
                shape = varargin{1};
-           elseif length(varargin)>1
+           elseif nargin > 1
                shape = [varargin{1};varargin{2}];
            end
            
-           if length(varargin)==3
-               name = varargin{3};
+           if nargin == 3
+               name = varargin(3);
            else
-               name = 'x';
+               if isnumeric(shape)
+                   name = {'x'};    % automatic name
+               else
+                   name = {};       % wrapping an MX object
+               end
            end
            
            import casadi.*
-           self@OptimizationObject(shape,name);
+           self@OptimizationObject(shape,name{:});
            self.lb = -inf*DM.ones(self.sparsity());
            self.ub = inf*DM.ones(self.sparsity());
            self.init = DM.zeros(self.sparsity());
